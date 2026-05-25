@@ -37,7 +37,7 @@ def _linear_headers() -> dict[str, str] | None:
     return {"Authorization": key, "Content-Type": "application/json"}
 
 
-def _create_linear_issue(payload: dict) -> str | None:
+def _linear_graphql(query: str, variables: dict) -> dict | None:
     headers = _linear_headers()
     if headers is None:
         return None
@@ -46,6 +46,54 @@ def _create_linear_issue(payload: dict) -> str | None:
     except ImportError:
         return None
 
+    resp = requests.post(
+        LINEAR_API_URL,
+        headers=headers,
+        json={"query": query, "variables": variables},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if data.get("errors"):
+        raise RuntimeError(f"Linear API error: {data['errors']}")
+    return data
+
+
+def _pattern_id_from_payload(payload: dict) -> str | None:
+    for tag in payload.get("tags", []):
+        if isinstance(tag, str) and tag.startswith("pattern-"):
+            return tag.removeprefix("pattern-")
+    return None
+
+
+def _verify_linear_issue(issue_id: str, payload: dict) -> None:
+    query = """
+    query IssueVerify($id: String!) {
+      issue(id: $id) {
+        id
+        identifier
+        title
+        description
+      }
+    }
+    """
+    data = _linear_graphql(query, {"id": issue_id})
+    issue = ((data or {}).get("data") or {}).get("issue")
+    if not issue:
+        raise RuntimeError(f"verify-after-write failed: issue {issue_id} was not found")
+    if issue.get("title") != payload["title"]:
+        raise RuntimeError(
+            f"verify-after-write failed: title mismatch for {issue.get('identifier') or issue_id}"
+        )
+    pattern_id = _pattern_id_from_payload(payload)
+    if pattern_id and pattern_id not in (issue.get("description") or ""):
+        raise RuntimeError(
+            f"verify-after-write failed: pattern {pattern_id} missing from "
+            f"{issue.get('identifier') or issue_id}"
+        )
+
+
+def _create_linear_issue(payload: dict) -> str | None:
     team_id = os.environ.get("LINEAR_TEAM_ID", DEFAULT_LINEAR_TEAM_ID)
     mutation = """
     mutation IssueCreate($input: IssueCreateInput!) {
@@ -63,17 +111,14 @@ def _create_linear_issue(payload: dict) -> str | None:
             "labelIds": [],
         }
     }
-    resp = requests.post(
-        LINEAR_API_URL,
-        headers=headers,
-        json={"query": mutation, "variables": variables},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    if data.get("errors"):
-        raise RuntimeError(f"Linear API error: {data['errors']}")
-    issue = data["data"]["issueCreate"]["issue"]
+    data = _linear_graphql(mutation, variables)
+    if data is None:
+        return None
+    result = data["data"]["issueCreate"]
+    if not result.get("success"):
+        raise RuntimeError("Linear issueCreate returned success=false")
+    issue = result["issue"]
+    _verify_linear_issue(issue["id"], payload)
     return issue["identifier"]
 
 

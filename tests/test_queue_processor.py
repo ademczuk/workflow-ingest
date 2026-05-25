@@ -86,3 +86,106 @@ def test_tracker_without_api_key_warns(tmp_path: Path) -> None:
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
     assert result.returncode == 0
     assert "LINEAR_API_KEY not set" in result.stderr
+
+
+def test_create_linear_issue_verifies_after_write(monkeypatch) -> None:
+    from automations import queue_processor
+
+    calls: list[str] = []
+
+    class FakeResponse:
+        def __init__(self, data: dict) -> None:
+            self._data = data
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._data
+
+    class FakeRequests:
+        @staticmethod
+        def post(url: str, headers: dict, json: dict, timeout: int) -> FakeResponse:
+            calls.append(json["query"])
+            if "IssueCreate" in json["query"]:
+                return FakeResponse({
+                    "data": {
+                        "issueCreate": {
+                            "success": True,
+                            "issue": {"id": "issue-1", "identifier": "CLA-999"},
+                        }
+                    }
+                })
+            return FakeResponse({
+                "data": {
+                    "issue": {
+                        "id": "issue-1",
+                        "identifier": "CLA-999",
+                        "title": "Route pattern",
+                        "description": "Pattern abc123 routed from YouTube.",
+                    }
+                }
+            })
+
+    monkeypatch.setenv("LINEAR_API_KEY", "lin_test")
+    monkeypatch.setitem(sys.modules, "requests", FakeRequests)
+
+    payload = {
+        "title": "Route pattern",
+        "description": "Pattern abc123 routed from YouTube.",
+        "tags": ["workflow-ingest", "pattern-abc123"],
+    }
+
+    assert queue_processor._create_linear_issue(payload) == "CLA-999"
+    assert len(calls) == 2
+    assert "IssueCreate" in calls[0]
+    assert "IssueVerify" in calls[1]
+
+
+def test_create_linear_issue_fails_if_verify_loses_pattern(monkeypatch) -> None:
+    from automations import queue_processor
+
+    class FakeResponse:
+        def __init__(self, data: dict) -> None:
+            self._data = data
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._data
+
+    class FakeRequests:
+        @staticmethod
+        def post(url: str, headers: dict, json: dict, timeout: int) -> FakeResponse:
+            if "IssueCreate" in json["query"]:
+                return FakeResponse({
+                    "data": {
+                        "issueCreate": {
+                            "success": True,
+                            "issue": {"id": "issue-1", "identifier": "CLA-999"},
+                        }
+                    }
+                })
+            return FakeResponse({
+                "data": {
+                    "issue": {
+                        "id": "issue-1",
+                        "identifier": "CLA-999",
+                        "title": "Route pattern",
+                        "description": "Pattern missing after write.",
+                    }
+                }
+            })
+
+    monkeypatch.setenv("LINEAR_API_KEY", "lin_test")
+    monkeypatch.setitem(sys.modules, "requests", FakeRequests)
+
+    payload = {
+        "title": "Route pattern",
+        "description": "Pattern abc123 routed from YouTube.",
+        "tags": ["workflow-ingest", "pattern-abc123"],
+    }
+
+    with pytest.raises(RuntimeError, match="verify-after-write failed"):
+        queue_processor._create_linear_issue(payload)

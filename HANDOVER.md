@@ -3,7 +3,7 @@
 > **Last updated:** 2026-05-25  
 > **Commit:** `539e2c2` on `main`  
 > **Repo:** `https://github.com/ademczuk/workflow-ingest`  
-> **Tests:** 93 passing  
+> **Tests:** 95 passing
 > **Python:** 3.12+  
 
 ---
@@ -248,7 +248,7 @@ In v0.3, a Kimi skill or shell wrapper could glue steps 1–3 together.
 3. **Keyword matcher is coarse:** It only matches on slug + display_name + notes. BM25 uses keywords + concepts + roles. Always prefer BM25.
 4. **Confidence scoring is a stub:** `route/confidence.py` returns 0.6 for everything. Real scoring requires feedback signal (deferred to v0.3+).
 5. **No scheduler:** Automations are scripts, not cron jobs. The operator runs them manually or via external scheduler.
-6. **Tracker verify-after-write is partial:** The `tracker_writer.py` Protocol defines `verify_passed`, but the actual Linear client in `queue_processor.py` only verifies that the API call succeeded. It does not re-query the issue to confirm the `pattern-{id}` tag exists (Linear GraphQL query is straightforward to add).
+6. **Tracker verify-after-write is enforced for Linear:** `queue_processor.py` creates the issue, re-queries it by id, and verifies the title plus `pattern-{id}` evidence in the description before counting the tracker write as OK. If verification fails, the write is counted as failed.
 7. **Conflict handling is append-only:** Conflict-tier patterns go to `data/conflicts/<YYYY-MM>.md`. Weekly synthesis (not yet implemented) batches them. They NEVER auto-convene `/solve-room`.
 8. **Playlist processing blocked:** CLA-134. Playlist URL `PLx-045m7by1k3ZaD6P8xpxwP0DvoPVGTJ` does not exist on YouTube. Needs correct URL from operator.
 
@@ -260,7 +260,6 @@ In v0.3, a Kimi skill or shell wrapper could glue steps 1–3 together.
 |---|---|
 | `inbox-drainer.py` implementation | Needs Obsidian vault MCP or direct file access to `inbox/youtube-queue.md` |
 | `weekly-synthesis.py` | Needs scheduler + Nimbalyst session API + scoring weights |
-| Full tracker verify-after-write | Needs Linear read-by-tag GraphQL query |
 | Confidence scoring | Needs feedback corpus to fit weights |
 | Multi-video batch / playlist | Blocked on CLA-134 |
 | Scheduler integration (cron/Windows Task Scheduler) | Out of scope for v0.2 |
@@ -319,7 +318,7 @@ python automations/inventory_refresh.py
 python -m pytest tests/ -q
 ```
 
-Expected: 93 tests pass, digest file created, no errors.
+Expected: 95 tests pass, digest file created, no errors.
 
 ---
 
