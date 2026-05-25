@@ -1,129 +1,177 @@
 schema_version: '1.0'
 generated_at: '2026-05-06T20:00:00'
 generator: workflow-ingest/inventory/refresh.py@v0-handcrafted-aligned-with-corpus-map-v1
-
 subsystems:
-
-  - slug: anismin
-    display_name: Anismin (Floor 1 strategist brain, AnisminOS federation)
-    sources:
-      - kind: obsidian_path
-        ref: developer/AnisminOS
-        last_seen: '2026-05-06T20:00:00'
-      - kind: memory_file
-        ref: reference_anisminos_cross_floor_protocol.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: opus 4.7 strategist federation cross-floor dispatch port 18889
-
-  - slug: meridian
-    display_name: Meridian (codex/gpt-5.4 brain, evolve-loop iterations)
-    sources:
-      - kind: obsidian_path
-        ref: developer/meridian
-        last_seen: '2026-05-06T20:00:00'
-      - kind: memory_file
-        ref: reference_meridian_context_overflow.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: meridian codex bridge discord critic research evolve loop
-
-  - slug: kimiclaw
-    display_name: KimiClawSwarm (KCS) classic vs crew Persona+Verify
-    sources:
-      - kind: operator_bullet
-        ref: kcs swarm persona crew kimi codex port 9643
-        last_seen: '2026-05-06T20:00:00'
-    notes: kcs kimi swarm persona verify crew tier1_ratio mailbox lifecycle
-
-  - slug: clawfish
-    display_name: Clawfish (Discord-fallback Opus pipeline)
-    sources:
-      - kind: operator_bullet
-        ref: clawfish discord fallback opus
-        last_seen: '2026-05-06T20:00:00'
-    notes: clawfish discord opus fallback openclaw saturation
-
-  - slug: solve-room
-    display_name: Solve-Room boardroom autonomy loop (4 brains)
-    sources:
-      - kind: obsidian_path
-        ref: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
-        last_seen: '2026-05-06T20:00:00'
-      - kind: memory_file
-        ref: reference_solve_room_audit_discriminators.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: solve-room boardroom four brain manager gate fail open shadow rollout dissent
-
-  - slug: visual-llm
-    display_name: Visual-LLM Stack (Qwen3.6-27B + mmproj on RTX 5090)
-    sources:
-      - kind: obsidian_path
-        ref: developer/visual-llm/operational-status-260504.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: visual qwen3.6 parakeet kokoro mmproj llama-server keyframes scene detect transcript
-
-  - slug: brutal-harness
-    display_name: Brutal Harness (QwQ-32B adversarial QA, 4-stage QC verdict)
-    sources:
-      - kind: operator_bullet
-        ref: brutal qwq adversarial qc verdict redteam
-        last_seen: '2026-05-06T20:00:00'
-      - kind: obsidian_path
-        ref: 02-Knowledge/Wiki/AI/Brutal-Harness-v3.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: brutal qwq-32b adversarial critic qc verdict telemetry calibration
-
-  - slug: trident
-    display_name: Trident multi-model orchestration (Codex/Gemini/Grok/Claude)
-    sources:
-      - kind: commit
-        ref: C:/Projects/_Codex/bin/trident
-        last_seen: '2026-05-06T20:00:00'
-    notes: trident codex gemini grok claude consensus scoring router fanout free-tier subscription
-
-  - slug: pantheon
-    display_name: Pantheon tiered council (provenance-only, not in v1 corpus_map)
-    sources:
-      - kind: operator_bullet
-        ref: pantheon council tiered domain-weighted episodes
-        last_seen: '2026-05-06T20:00:00'
-    notes: pantheon council tier domain weight episode history performance
-
-  - slug: pipeline.job-orchestrator
-    display_name: Job Orchestrator Motia pipeline (provenance-only)
-    sources:
-      - kind: obsidian_path
-        ref: developer/job-orchestrator
-        last_seen: '2026-05-06T20:00:00'
-    notes: job orchestrator motia scrape guardian embed classify score notify
-
-  - slug: knowledge.obsidian
-    display_name: Obsidian vault canonical knowledge (provenance-only)
-    sources:
-      - kind: obsidian_path
-        ref: /
-        last_seen: '2026-05-06T20:00:00'
-    notes: obsidian vault note knowledge documentation
-
-  - slug: knowledge.memory
-    display_name: Claude Code memory files (provenance-only)
-    sources:
-      - kind: memory_file
-        ref: MEMORY.md
-        last_seen: '2026-05-06T20:00:00'
-    notes: memory feedback project reference learning
-
-  - slug: tracker.nimbalyst
-    display_name: Nimbalyst tracker (provenance-only)
-    sources:
-      - kind: tracker_query
-        ref: 'type:* status:*'
-        last_seen: '2026-05-06T20:00:00'
-    notes: tracker nimbalyst bug task idea plan item
-
-  - slug: meta.cross-cutting
-    display_name: Cross-cutting patterns (provenance-only)
-    sources:
-      - kind: operator_bullet
-        ref: schema observability logging audit policy-as-code pipeline
-        last_seen: '2026-05-06T20:00:00'
-    notes: schema observability logging audit policy chain context branch git
+- slug: anismin
+  display_name: Anismin (Floor 1 strategist brain, AnisminOS federation)
+  sources:
+  - kind: obsidian_path
+    ref: developer/AnisminOS
+    last_seen: '2026-05-06T20:00:00'
+  - kind: memory_file
+    ref: reference_anisminos_cross_floor_protocol.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: opus 4.7 strategist federation cross-floor dispatch port 18889
+- slug: meridian
+  display_name: Meridian (codex/gpt-5.4 brain, evolve-loop iterations)
+  sources:
+  - kind: obsidian_path
+    ref: developer/meridian
+    last_seen: '2026-05-06T20:00:00'
+  - kind: memory_file
+    ref: reference_meridian_context_overflow.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: meridian codex bridge discord critic research evolve loop
+- slug: kimiclaw
+  display_name: KimiClawSwarm (KCS) classic vs crew Persona+Verify
+  sources:
+  - kind: operator_bullet
+    ref: kcs swarm persona crew kimi codex port 9643
+    last_seen: '2026-05-06T20:00:00'
+  notes: kcs kimi swarm persona verify crew tier1_ratio mailbox lifecycle
+- slug: clawfish
+  display_name: Clawfish (Discord-fallback Opus pipeline)
+  sources:
+  - kind: operator_bullet
+    ref: clawfish discord fallback opus
+    last_seen: '2026-05-06T20:00:00'
+  notes: clawfish discord opus fallback openclaw saturation
+- slug: solve-room
+  display_name: Solve-Room boardroom autonomy loop (4 brains)
+  sources:
+  - kind: obsidian_path
+    ref: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
+    last_seen: '2026-05-06T20:00:00'
+  - kind: memory_file
+    ref: reference_solve_room_audit_discriminators.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: solve-room boardroom four brain manager gate fail open shadow rollout dissent
+- slug: visual-llm
+  display_name: Visual-LLM Stack (Qwen3.6-27B + mmproj on RTX 5090)
+  sources:
+  - kind: obsidian_path
+    ref: developer/visual-llm/operational-status-260504.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: visual qwen3.6 parakeet kokoro mmproj llama-server keyframes scene detect
+    transcript
+- slug: brutal-harness
+  display_name: Brutal Harness (QwQ-32B adversarial QA, 4-stage QC verdict)
+  sources:
+  - kind: operator_bullet
+    ref: brutal qwq adversarial qc verdict redteam
+    last_seen: '2026-05-06T20:00:00'
+  - kind: obsidian_path
+    ref: 02-Knowledge/Wiki/AI/Brutal-Harness-v3.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: brutal qwq-32b adversarial critic qc verdict telemetry calibration
+- slug: trident
+  display_name: Trident multi-model orchestration (Codex/Gemini/Grok/Claude)
+  sources:
+  - kind: commit
+    ref: C:/Projects/_Codex/bin/trident
+    last_seen: '2026-05-06T20:00:00'
+  notes: trident codex gemini grok claude consensus scoring router fanout free-tier
+    subscription
+- slug: pantheon
+  display_name: Pantheon tiered council (provenance-only, not in v1 corpus_map)
+  sources:
+  - kind: operator_bullet
+    ref: pantheon council tiered domain-weighted episodes
+    last_seen: '2026-05-06T20:00:00'
+  notes: pantheon council tier domain weight episode history performance
+- slug: pipeline.job-orchestrator
+  display_name: Job Orchestrator Motia pipeline (provenance-only)
+  sources:
+  - kind: obsidian_path
+    ref: developer/job-orchestrator
+    last_seen: '2026-05-06T20:00:00'
+  notes: job orchestrator motia scrape guardian embed classify score notify
+- slug: knowledge.obsidian
+  display_name: Obsidian vault canonical knowledge (provenance-only)
+  sources:
+  - kind: obsidian_path
+    ref: /
+    last_seen: '2026-05-06T20:00:00'
+  notes: obsidian vault note knowledge documentation
+- slug: knowledge.memory
+  display_name: Claude Code memory files (provenance-only)
+  sources:
+  - kind: memory_file
+    ref: MEMORY.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: memory feedback project reference learning
+- slug: tracker.nimbalyst
+  display_name: Nimbalyst tracker (provenance-only)
+  sources:
+  - kind: tracker_query
+    ref: type:* status:*
+    last_seen: '2026-05-06T20:00:00'
+  notes: tracker nimbalyst bug task idea plan item
+- slug: meta.cross-cutting
+  display_name: Cross-cutting patterns (provenance-only)
+  sources:
+  - kind: operator_bullet
+    ref: schema observability logging audit policy-as-code pipeline
+    last_seen: '2026-05-06T20:00:00'
+  notes: schema observability logging audit policy chain context branch git
+- slug: page.vector-databases
+  display_name: Vector Databases
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/Vector-Databases.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: vector database embedding similarity search semantic dimension pgvector ChromaDB
+    LanceDB Qdrant Matryoshka Embeddings Hybrid Search Multi-vector Representations
+- slug: page.matryoshka-embeddings
+  display_name: Matryoshka Embeddings
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/Matryoshka-Embeddings.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: matryoshka embedding dimension reduction vector retrain Vector Databases
+    Hybrid Search Multi-vector Representations
+- slug: page.karpathy-kb
+  display_name: Karpathy's Knowledge Base Architecture
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/Karpathy's-Knowledge-Base-Architecture.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: karpathy knowledge base wiki vault compiler raw ingestion runtime Compiler
+    Analogy for Knowledge Management Raw Data Ingestion Knowledge Compilation Wiki
+    Executable Knowledge Base Test Suite Agent Querying Runtime
+- slug: page.karpathy-auto-research
+  display_name: Andre Karpathy's Auto Research Project
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/Andre-Karpathy's-Auto-Research-Project.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: karpathy auto research llm training experimentation self-improving Self-Improving
+    AI Automated Experimentation Pipeline AI Feedback Loop Auto Research Setup Process
+- slug: page.context-rot
+  display_name: Context Rot (root-cause framing for memory architecture)
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: context rot decay window degradation memory architecture forward lateral
+    working attention Context Rot Context Engineering Memory Architecture Long-Context
+    Degradation Working-Memory Decay Root-Cause for Drift Patterns Auto Memory RAG
+    Graph RAG
+- slug: page.youtube-summarizer-mcp
+  display_name: YouTube Summarizer MCP Server
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: youtube summarizer mcp server fastmcp stdio subprocess nimbalyst blackwell
+    MCP server FastMCP subprocess wrapping Nimbalyst MCP auto-watch visual-llm stdio
+    transport
+- slug: page.codex-brain
+  display_name: Codex Brain (gpt-5.4 via OAuth-Bridge)
+  sources:
+  - kind: operator_bullet
+    ref: 02-Knowledge/Wiki/AI/Codex-Brain.md
+    last_seen: '2026-05-06T20:00:00'
+  notes: codex gpt-5.4 oauth-bridge chatgpt trident worktree subagent full-auto Solve-Room
+    v4 System Anismin Brain Meridian Brain Kimiclaw Brain Pre-flight Health Probes
+    Solve-Room Known Limits Teach Mailbox

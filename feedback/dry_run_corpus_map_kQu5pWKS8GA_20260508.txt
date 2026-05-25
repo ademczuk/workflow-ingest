@@ -22,7 +22,7 @@
 == novel candidates (below match_threshold; READ canonical before declaring novel)
    pattern=5034abe3713d0ca8 score=0.032 -> would-route visual-llm
      canonical-to-read: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
-     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and 
+     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and
    pattern=5e44dff32c9728de score=0.032 -> would-route meridian
      canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
      idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown fil
@@ -49,7 +49,7 @@
      idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunk
    pattern=63071b593c003aca score=0.043 -> would-route meridian
      canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
-     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill 
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill
    pattern=bdbe71effd5a6da5 score=0.022 -> would-route trident
      canonical-to-read: 02-Knowledge/Wiki/AI/Codex-Brain.md
      idea: [03:31-04:12] The speaker details the exact file structure of Claude Code's auto-memory system, explaining how the `memo
@@ -59,7 +59,7 @@
 
 == top hits per pattern (for cross-check)
    5034abe3713d0ca8 feature-add               -> visual-llm           (jaccard=0.032)
-     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and 
+     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and
      runner-up: meridian             (jaccard=0.020)
    5e44dff32c9728de tooling-swap              -> meridian             (jaccard=0.032)
      idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown fil
@@ -86,7 +86,7 @@
      idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunk
      runner-up: anismin              (jaccard=0.000)
    63071b593c003aca architecture-pattern      -> meridian             (jaccard=0.043)
-     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill 
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill
      runner-up: visual-llm           (jaccard=0.033)
    bdbe71effd5a6da5 architecture-pattern      -> trident              (jaccard=0.022)
      idea: [03:31-04:12] The speaker details the exact file structure of Claude Code's auto-memory system, explaining how the `memo

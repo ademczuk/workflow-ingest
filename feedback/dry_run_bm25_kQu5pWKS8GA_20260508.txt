@@ -35,7 +35,7 @@
      canonical: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
      write_target: 02-Knowledge/Wiki/AI/
    5e44dff32c9728de tooling-swap              -> [topical_page] page.context-rot               score=16.53  tier=high
-     idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown files in the 
+     idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown files in the
      canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
    8f1398bf7f9dae55 architecture-pattern      -> [topical_page] page.context-rot               score= 7.63  tier=high
      idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatGPT shoehorning irrelevant past
@@ -48,7 +48,7 @@
      idea: [01:13-01:21] The speaker outlines the progression from naive RAG to graph RAG and agentic RAG.
      canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
    29498a1017685b16 architecture-pattern      -> [topical_page] page.context-rot               score= 8.55  tier=high
-     idea: [00:15] & [17:40] A dense, interactive network graph titled "My Graph KB" displays hundreds of interconnected nodes in red, blue, 
+     idea: [00:15] & [17:40] A dense, interactive network graph titled "My Graph KB" displays hundreds of interconnected nodes in red, blue,
      canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
    fdf69726faef0824 anti-pattern              -> [topical_page] page.vector-databases          score=11.43  tier=high
      idea: [28:24] & [32:57] An Excalidraw whiteboard illustrates the mechanics of vector embeddings, showing a 3D scatter plot with semantic
@@ -61,7 +61,7 @@
      idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunking proces
      canonical: 02-Knowledge/Wiki/AI/Andre-Karpathy's-Auto-Research-Project.md
    63071b593c003aca architecture-pattern      -> [subsystem] meridian                       score= 5.55  tier=medium
-     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill level and 
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill level and
      canonical: 02-Knowledge/Wiki/AI/Meridian-Brain.md
      write_target: 02-Knowledge/Wiki/research/
    bdbe71effd5a6da5 architecture-pattern      -> [topical_page] page.context-rot               score=13.01  tier=high

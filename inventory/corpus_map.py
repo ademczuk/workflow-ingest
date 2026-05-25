@@ -216,7 +216,9 @@ def validate_against_snapshot(corpus: CorpusMap, snapshot: Snapshot) -> None:
     happily route to dead subsystems.
     """
     snap_slugs = snapshot.slug_set()
-    missing = sorted(s.slug for s in corpus.subsystems if s.slug not in snap_slugs)
+    missing_subs = sorted(s.slug for s in corpus.subsystems if s.slug not in snap_slugs)
+    missing_pages = sorted(p.slug for p in corpus.topical_pages if p.slug not in snap_slugs)
+    missing = missing_subs + missing_pages
     if missing:
         raise CorpusSnapshotMismatch(
             f"corpus_map references slugs not in snapshot ({snapshot.generated_at.isoformat()}): "

@@ -84,11 +84,16 @@ def decide(
             reason=f"topical_page target ({routing.subsystem_slug})",
             write_target=routing.write_target,
         )
-    if routing.tier == "low" and routing.write_target is None:
+    if routing.tier == "low":
         return DecisionResult(
             decision="wiki-only",
-            reason=f"low tier with no write_target ({routing.subsystem_slug})",
-            write_target=None,
+            reason=(
+                f"low tier ({routing.subsystem_slug}); "
+                + ("write_target present but low-tier items stay wiki-only"
+                   if routing.write_target is not None
+                   else "no write_target defined")
+            ),
+            write_target=routing.write_target,
         )
 
     # 5. integrate — actionable, tracker-worthy

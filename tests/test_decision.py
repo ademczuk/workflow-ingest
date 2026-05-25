@@ -146,6 +146,26 @@ def test_integrate_falls_back_to_wiki_only_when_no_write_target(snapshot: Snapsh
     assert "no write_target" in d.reason
 
 
+def test_wiki_only_on_low_tier_with_write_target(snapshot: Snapshot):
+    """Low-tier patterns should stay wiki-only even if a write_target exists.
+    Integration work is reserved for high/medium tier signals."""
+    p = _evidence_pattern("anything")
+    sub = next(s for s in snapshot.subsystems if s.slug == "trident")
+    low_with_target = Routing(
+        subsystem_slug=sub.slug,
+        match_state="yellow",
+        tier="low",
+        snapshot_version=snapshot.schema_version,
+        write_target="tracker.nimbalyst",
+    )
+    routed = p.with_routing(low_with_target)
+    a = audit(routed, snapshot, frozenset())
+    d = decide(routed, a, frozenset())
+    assert d.decision == "wiki-only"
+    assert "low tier" in d.reason
+    assert d.write_target == "tracker.nimbalyst"
+
+
 # ── end-to-end fixture test ─────────────────────────────────────────────────
 
 
