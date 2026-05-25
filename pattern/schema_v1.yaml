@@ -1,0 +1,82 @@
+schema_version: "1.1"
+name: pattern
+description: |
+  Source-agnostic pattern extracted from a digest. v1 only ships the youtube
+  adapter, but the schema must NOT contain youtube-specific fields. Add a new
+  source_type entry plus an adapter to extend; never add YouTube fields here.
+
+  v1.1 additions:
+    Routing.canonical_path - obsidian_canonical from corpus_map at match time
+    Routing.write_target   - write_target_when_novel from corpus_map at match time
+
+  Both new fields live on Routing (not on Pattern) because routing is a per-
+  match decision, not a property of the pattern itself.
+
+fields:
+  pattern_id:
+    type: string
+    description: SHA-256 of (source_url + idea), first 16 hex chars. Deterministic.
+    required: true
+  source_url:
+    type: string
+    description: Canonical URL of the source. For YouTube, the watch URL.
+    required: true
+  source_type:
+    type: enum
+    values: [youtube]
+    description: Adapter discriminator. v1 enum has one value; widens later.
+    required: true
+  source_meta:
+    type: object
+    description: Adapter-defined dict. YouTube populates video_id + frame_ts.
+    required: true
+  captured_at:
+    type: string
+    format: ISO-8601 date
+    required: true
+  idea:
+    type: string
+    description: 1-2 sentences. The actionable proposition extracted from the digest.
+    required: true
+  evidence:
+    type: array
+    items: {type: string}
+    description: Quoted phrases or anchored snippets from the digest. >=1 required.
+    min_items: 1
+  type:
+    type: enum
+    values:
+      - feature-add
+      - architecture-pattern
+      - tooling-swap
+      - observability-gap
+      - anti-pattern
+      - external-tool
+    required: true
+  confidence:
+    type: number
+    range: [0.0, 1.0]
+    default: 0.6
+    description: |
+      v0 stub returns 0.6. v1.1 BM25 matcher will populate a real score.
+      When real scores land, tier thresholds (0.40 / 0.75) need recalibration
+      against actual distribution; the old cutoffs were guesses derived from
+      a constant.
+  routing:
+    type: object
+    nullable: true
+    description: |
+      Filled by matcher. Null until matched.
+      Shape (v1.1):
+        subsystem_slug:   string  (must be live in current snapshot)
+        match_state:      enum {green, yellow, red}
+        tier:             enum {high, medium, low, conflict}
+        snapshot_version: string  (which inventory snapshot was used)
+        canonical_path:   string | null  (obsidian_canonical from corpus_map)
+        write_target:     string | null  (write_target_when_novel from corpus_map)
+
+invariants:
+  - Pattern fields stay source-agnostic. New source_type entries widen the
+    enum; YouTube-specific fields go in source_meta, never on Pattern.
+  - Routing is per-match. Same Pattern can route differently against
+    different snapshots (e.g. after corpus_map updates).

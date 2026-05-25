@@ -1,0 +1,175 @@
+schema_version: "1.0"
+name: corpus_map
+description: |
+  Routing config consumed by the matcher. Distinct from snapshot_schema_v1
+  (which tracks subsystem provenance). The matcher reads BOTH at decision
+  time: corpus_map provides keywords + canonical/operational paths;
+  snapshot provides the live slug set for slug-validation gates.
+
+  Slug-validation is non-negotiable: if a slug appears in corpus_map but not
+  in the current snapshot, the matcher fails loud at load time. This catches
+  stale corpus_map shipped alongside a newer snapshot routing to dead
+  subsystems.
+
+fields:
+  schema_version:
+    type: string
+    const: "1.0"
+    required: true
+    description: |
+      MUST be a YAML string. YAML float 1.0 silently parses different and
+      breaks string comparison. Loader rejects float values explicitly.
+
+  generated_at:
+    type: string
+    format: ISO-8601 date or datetime
+    required: true
+
+  source:
+    type: string
+    description: Pointer to where this corpus_map was authored.
+    required: true
+
+  subsystems:
+    type: array
+    required: true
+    items:
+      type: object
+      fields:
+        slug:
+          type: string
+          pattern: "^[a-z0-9.-]+$"
+          required: true
+          description: Stable identifier. MUST also exist in current snapshot.
+        name:
+          type: string
+          required: true
+        role:
+          type: string
+          required: true
+          description: Free-text description used for keyword harvesting.
+        keywords:
+          type: array
+          items: {type: [string, number]}
+          required: true
+          description: |
+            Tokens the matcher scores against. Numbers (e.g. port 9643)
+            permitted; loader coerces to string at tokenize time.
+        concepts:
+          type: array
+          items: {type: string}
+          required: false
+          description: Cross-system overlap markers, scored alongside keywords.
+        obsidian_canonical:
+          type: string
+          required: false
+          description: |
+            Path the digester reads before declaring a concept novel.
+            Verify-novelty step opens this file; below-threshold score alone
+            is NOT proof of novelty.
+        obsidian_operational:
+          type: array
+          items: {type: string}
+          required: false
+          description: |
+            Existing pages where routed patterns can append a
+            "Mentioned in [video] [MM:SS]" entry without modifying body.
+        write_target_when_novel:
+          type: string
+          required: false
+          description: |
+            Directory where stub notes go for genuinely-new concepts.
+            Format precedent: Context-Rot.md (frontmatter with source_urls,
+            concepts, tags; body with framing; source citation footer).
+
+  topical_pages:
+    type: array
+    required: false
+    description: |
+      Wiki pages that are not subsystems but ARE valid routing targets.
+      Patterns about generic concepts (vector embeddings, knowledge-base
+      architecture, context rot) route here instead of being squeezed into
+      a subsystem they don't actually belong to. Topical pages are append-
+      only canonicals; they do not have write_target_when_novel because the
+      page IS the canonical target.
+
+      Matcher behavior: builds a separate BM25 index over topical_pages,
+      scores each pattern against subsystems + topical_pages, picks whichever
+      target scores higher. Routing.target_kind discriminates so the writer
+      knows whether to stub-at-write_target (subsystem) or append-to-canonical
+      (topical_page).
+    items:
+      type: object
+      fields:
+        slug:
+          type: string
+          pattern: "^page\\.[a-z0-9-]+$"
+          required: true
+          description: |
+            Topical-page slugs are namespaced with `page.` prefix to keep
+            them distinct from subsystem slugs in routing logs and tests.
+        name:
+          type: string
+          required: true
+        canonical_path:
+          type: string
+          required: true
+          description: Path under OBSIDIAN_VAULT_ROOT to the wiki page itself.
+        keywords:
+          type: array
+          items: {type: string}
+          required: true
+        concepts:
+          type: array
+          items: {type: string}
+          required: false
+
+  cross_cutting:
+    type: array
+    required: false
+    items:
+      type: object
+      fields:
+        name: {type: string, required: true}
+        path: {type: string, required: true}
+        purpose: {type: string, required: true}
+        use_when: {type: string, required: true}
+    description: |
+      Topical surfaces (Harness Insights, Skills, Infrastructure, AgentReef).
+      Read but not written-to as primary routing targets. Concepts that hit
+      multiple subsystems land here instead of being multi-routed.
+
+  known_gaps_*:
+    type: array
+    required: false
+    description: |
+      Dated gap registry (key suffix is the inventory date). Substring
+      fallback path: if any known-gap concept matches a pattern's text
+      directly, the gap fires regardless of jaccard or BM25 score.
+    items:
+      type: object
+      fields:
+        concept: {type: string, required: true}
+        why: {type: string, required: true}
+        landing_target: {type: string, required: true}
+
+  routing_rules:
+    type: object
+    required: false
+    fields:
+      match_threshold_jaccard: {type: number, range: [0.0, 1.0]}
+      novelty_threshold_jaccard: {type: number, range: [0.0, 1.0]}
+      bm25_match_threshold: {type: number, range: [0.0, 100.0]}
+      multi_match_resolution: {type: enum, values: [first, all, cross-cutting]}
+      priority_order:
+        type: array
+        items: {type: string}
+        description: Slug order; tie-break favours earlier entries.
+
+invariants:
+  - schema_version is a string ("1.0"), never a YAML float (1.0).
+  - All slugs unique within a corpus_map.
+  - Every slug in corpus_map.subsystems[*].slug MUST exist in the paired
+    snapshot.subsystems[*].slug. Slug-validation gate runs at matcher load.
+  - obsidian_canonical, when present, MUST be a relative path under
+    OBSIDIAN_VAULT_ROOT.

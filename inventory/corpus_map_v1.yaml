@@ -1,0 +1,239 @@
+---
+# Project corpus inventory for the youtube-digest automation router.
+# Sourced from C:\Projects\_Github\Obsidian\...\02-Knowledge\Wiki\
+# and ~/.claude/projects/<proj>/memory/  on 2026-05-06.
+#
+# Schema: validates against inventory/corpus_schema_v1.yaml.
+# This is NOT the same shape as inventory/snapshot_schema_v1.yaml — the two
+# files serve different jobs. Snapshot tracks subsystem provenance ("when
+# did I last see evidence for this slug"). Corpus map is the routing config
+# the matcher consults at decision time.
+#
+# Each subsystem is one routing target. The matcher uses `keywords` for
+# scoring against the digest's notable visuals + notable spoken content +
+# key points. `concepts` is for cross-system overlap detection (e.g.
+# "context rot" can matter to multiple subsystems).
+#
+# `obsidian_canonical` is the file the digester reads before declaring a
+# concept novel. `obsidian_operational` is the existing pages where routed
+# patterns can append a "Mentioned in [video] [MM:SS]" entry.
+# `write_target_when_novel` is where to drop a stub note for genuinely-new
+# concepts (verified by reading the canonical, not by score alone).
+#
+# Slug-validation: the matcher fails loud if a slug here is not also in the
+# current snapshot.yaml. This catches stale corpus_map shipped alongside a
+# newer snapshot routing to dead subsystems.
+
+schema_version: "1.0"
+generated_at: 2026-05-06
+source: corpus_map_v1.yaml
+
+subsystems:
+
+  - slug: anismin
+    name: Anismin
+    role: "Opus 4.7 strategist brain (Floor 1 of AnisminOS federation, port 18889)"
+    keywords: [anismin, strategist, federation, floor 1, dispatch, opus 4.7, 18889]
+    concepts: [federation, multi-tenant, scoping rules, cross-floor protocol]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Anismin-Brain.md
+    obsidian_operational:
+      - 02-Knowledge/Wiki/projects/AnisminOS-Floor-1-Preflight-Mirror.md
+      - 02-Knowledge/Wiki/Infrastructure/AnisminOS-Operational-Cadence.md
+    write_target_when_novel: 02-Knowledge/Wiki/projects/
+
+  - slug: meridian
+    name: Meridian
+    role: "Research and evaluation harness brain; runs evolve-loop iterations"
+    keywords: [meridian, evolve loop, critic, research, runtime policy, progressive disclosure]
+    concepts: [evaluation, runtime policy injection, semantic search, knowledge synthesis]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+    obsidian_operational:
+      - 02-Knowledge/Wiki/research/_index.md
+      - 02-Knowledge/Wiki/AI/Meridian-Critic-Infrastructure.md
+      - 02-Knowledge/Wiki/AI/Meridian-Cross-Check.md
+    write_target_when_novel: 02-Knowledge/Wiki/research/
+
+  - slug: kimiclaw
+    name: KimiClawSwarm (KCS)
+    role: "Kimi swarm brain at port 9643; classic vs crew Persona+Verify; auto-mode via tier1_ratio"
+    keywords: [kimi, kimiclaw, kcs, swarm, persona, verify, ocean personas, mailbox, lifecycle, 9643]
+    concepts: [multi-agent swarm, persona-facade, fault hierarchy, audit-driven, federation-ready]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Kimiclaw-Brain.md
+    obsidian_operational:
+      - 02-Knowledge/Wiki/projects/kimiclawswarm-v4-reference.md
+      - 02-Knowledge/Wiki/projects/KimiClawSwarm-v4.10-Cascade-Extension.md
+      - 02-Knowledge/Wiki/AI/KCS-Auto-Mode.md
+    write_target_when_novel: 02-Knowledge/Wiki/projects/
+
+  - slug: clawfish
+    name: Clawfish
+    role: "Discord-fallback Opus pipeline; backup path when openclaw saturates"
+    keywords: [clawfish, discord fallback, opus discord, openclaw saturation]
+    concepts: [fallback, capacity overflow, multi-channel routing]
+    obsidian_canonical: 02-Knowledge/Wiki/Harness-Insights/Clawfish-Pipeline.md
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/Harness-Insights/
+
+  - slug: solve-room
+    name: Solve-Room
+    role: "Boardroom autonomy loop integrating all four brains; manager gates, fail-open, shadow rollout"
+    keywords: [solve room, solve-room, boardroom, four brain, manager gate, fail open, shadow rollout, EMPTY_VETO_NEUTRAL, dissent, ratify]
+    concepts: [consensus, veto, audit trail, novelty gating, dispatch_status_history]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
+    obsidian_operational:
+      - 02-Knowledge/Wiki/projects/Solve-Room-Autonomy-Loop-Handover-260429.md
+      - 02-Knowledge/Wiki/projects/Solve-Room-Fail-Open-Degraded-Brain-Handling.md
+    write_target_when_novel: 02-Knowledge/Wiki/projects/
+
+  - slug: visual-llm
+    name: Visual-LLM Stack
+    role: "Local YouTube and video summarization via Qwen3.6-27B + mmproj on RTX 5090"
+    keywords: [qwen3.6, mmproj, llama-server, parakeet, kokoro tts, keyframes, scene detect, visual-llm, mcp-server youtube_summarize]
+    concepts: [vision language model, multimodal embedding, transcript backends, slide extraction]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/AI/
+
+  - slug: brutal-harness
+    name: Brutal Harness
+    role: "Adversarial QA via QwQ-32B; reds, asymmetric critic, four-stage QC verdict"
+    keywords: [brutal, QwQ, qwq-32b, asymmetric critic, qc verdict, brutal redteam, brutal-on bat]
+    concepts: [adversarial validation, telemetry, calibration, common failure modes]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Brutal-Harness-v3.md
+    obsidian_operational:
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-System.md
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-Run-Lifecycle.md
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-Telemetry.md
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-Common-Failure-Modes.md
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-Calibration-Process.md
+      - 02-Knowledge/Wiki/AI/Brutal-Harness-v3-Extension-Points.md
+    write_target_when_novel: 02-Knowledge/Wiki/AI/
+
+  - slug: trident
+    name: Trident
+    role: "Multi-model orchestration: Codex / Gemini / Grok / Claude consensus, scoring-based routing"
+    keywords: [trident, ask codex, ask gemini, ask grok, ask all, qc consensus, scoring router, fanout]
+    concepts: [multi-model consensus, free-tier subscriptions, model selection, prompt adaptation]
+    obsidian_canonical: 02-Knowledge/Wiki/AI/Codex-Brain.md
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/AI/
+
+# Topical pages — wiki pages that are not subsystems but ARE valid routing
+# targets. Patterns about generic concepts (vector embeddings, knowledge-base
+# architecture, context rot) land here instead of being shoehorned into a
+# subsystem they don't belong to. Append-only canonicals.
+
+topical_pages:
+
+  - slug: page.vector-databases
+    name: Vector Databases
+    canonical_path: 02-Knowledge/Wiki/AI/Vector-Databases.md
+    keywords: [vector, database, embedding, similarity, search, semantic, dimension]
+    concepts: [pgvector, ChromaDB, LanceDB, Qdrant, Matryoshka Embeddings, Hybrid Search, Multi-vector Representations]
+
+  - slug: page.matryoshka-embeddings
+    name: Matryoshka Embeddings
+    canonical_path: 02-Knowledge/Wiki/AI/Matryoshka-Embeddings.md
+    keywords: [matryoshka, embedding, dimension, reduction, vector, retrain]
+    concepts: [Vector Databases, Hybrid Search, Multi-vector Representations]
+
+  - slug: page.karpathy-kb
+    name: Karpathy's Knowledge Base Architecture
+    canonical_path: 02-Knowledge/Wiki/AI/Karpathy's-Knowledge-Base-Architecture.md
+    keywords: [karpathy, knowledge, base, wiki, vault, compiler, raw, ingestion, runtime]
+    concepts: [Compiler Analogy for Knowledge Management, Raw Data Ingestion, Knowledge Compilation, Wiki Executable Knowledge Base, Test Suite, Agent Querying Runtime]
+
+  - slug: page.karpathy-auto-research
+    name: Andre Karpathy's Auto Research Project
+    canonical_path: 02-Knowledge/Wiki/AI/Andre-Karpathy's-Auto-Research-Project.md
+    keywords: [karpathy, auto, research, llm, training, experimentation, self-improving]
+    concepts: [Self-Improving AI, Automated Experimentation Pipeline, AI Feedback Loop, Auto Research Setup Process]
+
+  - slug: page.context-rot
+    name: Context Rot (root-cause framing for memory architecture)
+    canonical_path: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+    keywords: [context, rot, decay, window, degradation, memory, architecture, forward, lateral, working, attention]
+    concepts: [Context Rot, Context Engineering, Memory Architecture, Long-Context Degradation, Working-Memory Decay, Root-Cause for Drift Patterns, Auto Memory, RAG, Graph RAG]
+
+  - slug: page.youtube-summarizer-mcp
+    name: YouTube Summarizer MCP Server
+    canonical_path: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+    keywords: [youtube, summarizer, mcp, server, fastmcp, stdio, subprocess, nimbalyst, blackwell]
+    concepts: [MCP server, FastMCP, subprocess wrapping, Nimbalyst MCP auto-watch, visual-llm, stdio transport]
+
+  - slug: page.codex-brain
+    name: Codex Brain (gpt-5.4 via OAuth-Bridge)
+    canonical_path: 02-Knowledge/Wiki/AI/Codex-Brain.md
+    keywords: [codex, gpt-5.4, oauth-bridge, chatgpt, trident, worktree, subagent, full-auto]
+    concepts: [Solve-Room v4 System, Anismin Brain, Meridian Brain, Kimiclaw Brain, Pre-flight Health Probes, Solve-Room Known Limits, Teach Mailbox]
+
+
+# Cross-cutting surfaces — read but don't write to these as primary targets.
+# Used for novelty detection: a concept that matches multiple subsystems
+# (e.g. "context rot" applies to all of them) lands in one of these instead.
+
+cross_cutting:
+  - name: Harness Insights
+    path: 02-Knowledge/Wiki/Harness-Insights/
+    purpose: "Anti-patterns, audit findings, drift signatures, multi-AI patterns"
+    use_when: "Concept describes a generic engineering pattern, not a specific subsystem"
+
+  - name: Skills
+    path: 02-Knowledge/Wiki/skills/
+    purpose: "Operational primitives: ingest pipelines, gemini concept extraction, scheduled tasks"
+    use_when: "Concept is a reusable how-to that any subsystem could adopt"
+
+  - name: Infrastructure
+    path: 02-Knowledge/Wiki/Infrastructure/
+    purpose: "Cross-agent dispatcher, classifier-trigger, memory-hash-watch, scheduled-task-cascades"
+    use_when: "Concept is plumbing that multiple subsystems share"
+
+  - name: AgentReef
+    path: 02-Knowledge/Wiki/AgentReef/
+    purpose: "Mentorship + spec-reply protocols, top-of-stack innovation"
+    use_when: "Concept involves agent-to-agent contracts, mentorship, or spec-driven coordination"
+
+# Negative space: concepts the video brought up that we DON'T have wiki entries for.
+# When the digester finds these in any digest, they're high-priority "steal" candidates.
+# Update this list as you fill the gaps.
+
+known_gaps_2026_05_06:
+  - concept: "LightRAG"
+    why: "No wiki entry; video flagged as the lowest-effort graph-RAG win"
+    landing_target: 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+  - concept: "Microsoft GraphRAG"
+    why: "No wiki entry; same family as LightRAG but heavier; revisit only if LightRAG fails"
+    landing_target: 02-Knowledge/Wiki/research/
+  - concept: "RAG-Anything multimodal"
+    why: "No wiki entry; relevant to visual-llm vault expansion (PDFs, scanned docs)"
+    landing_target: 02-Knowledge/Wiki/AI/
+  - concept: "Gemini embedding for video (March 2026)"
+    why: "Too recent; no wiki entry; relevant to visual-llm pipeline ingestion"
+    landing_target: 02-Knowledge/Wiki/AI/
+  - concept: "Re-rankers (RAG retrieval refinement)"
+    why: "Briefly mentioned in video; no wiki entry; relevant to paper-research-mcp + visual-llm"
+    landing_target: 02-Knowledge/Wiki/AI/
+  - concept: "Context rot as first-class principle"
+    why: "Implicit across many notes but no canonical entry; ties dual-cli yield, audit-inherited-flags, retention-logic together"
+    landing_target: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+  - concept: "Karpathy vault structure (vault/wiki/raw)"
+    why: "Andre Karpathy's exact structure described in video; you operationalize this but no wiki page documents the canonical layout"
+    landing_target: 02-Knowledge/Wiki/skills/
+
+# Routing rules for the matcher.
+# When a digest produces N candidate patterns, route each by best-match keyword
+# overlap. Tie-break by `priority` here (lower = match first).
+
+routing_rules:
+  match_threshold_jaccard: 0.15  # min keyword overlap to consider a hit
+  novelty_threshold_jaccard: 0.10  # below this against canonical, mark as novel
+  multi_match_resolution: "all"  # if a concept hits multiple subsystems, write to all (cross-cutting goes to Harness-Insights)
+  priority_order:
+    - solve-room       # boardroom-level concepts win first (they often subsume others)
+    - anismin
+    - meridian
+    - kimiclaw
+    - brutal-harness
+    - visual-llm
+    - clawfish
+    - trident

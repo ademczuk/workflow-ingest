@@ -1,0 +1,60 @@
+schema_version: "1.0"
+name: inventory_snapshot
+description: |
+  Snapshot of the workflow inventory at a point in time. Refreshed nightly.
+  Subsystem slugs are stable over time; their source pointers may shift.
+  The matcher uses the slug-set from a current snapshot to validate that any
+  routed pattern points at a live subsystem, not a stale or fabricated one.
+
+fields:
+  schema_version:
+    type: string
+    const: "1.0"
+    required: true
+  generated_at:
+    type: string
+    format: ISO-8601 datetime
+    required: true
+  generator:
+    type: string
+    description: Module + version that built this snapshot.
+    required: true
+  subsystems:
+    type: array
+    items:
+      type: object
+      fields:
+        slug:
+          type: string
+          pattern: "^[a-z0-9.-]+$"
+          description: Stable identifier. Dotted convention groups related slugs.
+        display_name:
+          type: string
+        sources:
+          type: array
+          items:
+            type: object
+            fields:
+              kind:
+                type: enum
+                values:
+                  - commit
+                  - tracker_query
+                  - obsidian_path
+                  - memory_file
+                  - operator_bullet
+              ref:
+                type: string
+                description: Path, query, or pointer specific to the kind.
+              last_seen:
+                type: string
+                format: ISO-8601 datetime
+        notes:
+          type: string
+          nullable: true
+          description: Operator-added context. Optional.
+
+invariants:
+  - All slugs unique within a snapshot.
+  - Every subsystem has >=1 source.
+  - generated_at is monotonic across successive snapshots.

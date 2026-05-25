@@ -1,0 +1,96 @@
+== dry-run: kQu5pWKS8GA_summary.md
+   patterns: 12
+   subsystems: 8
+   thresholds: match>=0.15, novelty<0.1
+
+== routing distribution
+   meridian               6
+   visual-llm             3
+   solve-room             2
+   trident                1
+
+== known-gaps_2026_05_06 hits
+   LightRAG                            pattern=8f1398bf7f9dae55 (architecture-pattern)
+     idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatG
+     landing: 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+     why: No wiki entry; video flagged as the lowest-effort graph-RAG win
+   LightRAG                            pattern=147c9c6f4e73b4d7 (observability-gap)
+     idea: [14:47] & [40:48] The LightRAG interface sidebar displays detailed metadata for selected nodes, incl
+     landing: 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+     why: No wiki entry; video flagged as the lowest-effort graph-RAG win
+
+== novel candidates (below match_threshold; READ canonical before declaring novel)
+   pattern=5034abe3713d0ca8 score=0.032 -> would-route visual-llm
+     canonical-to-read: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and 
+   pattern=5e44dff32c9728de score=0.032 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown fil
+   pattern=8f1398bf7f9dae55 score=0.018 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatGPT shoehorning irrel
+   pattern=61c74220eb5f29d7 score=0.029 -> would-route solve-room
+     canonical-to-read: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
+     idea: [05:10-05:43] The speaker addresses the psychological fear of losing context when closing chat windows, explaining how t
+   pattern=b8654dbb9a1ca8da score=0.044 -> would-route visual-llm
+     canonical-to-read: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+     idea: [01:13-01:21] The speaker outlines the progression from naive RAG to graph RAG and agentic RAG.
+   pattern=29498a1017685b16 score=0.024 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [00:15] & [17:40] A dense, interactive network graph titled "My Graph KB" displays hundreds of interconnected nodes in r
+   pattern=fdf69726faef0824 score=0.050 -> would-route visual-llm
+     canonical-to-read: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+     idea: [28:24] & [32:57] An Excalidraw whiteboard illustrates the mechanics of vector embeddings, showing a 3D scatter plot wit
+   pattern=147c9c6f4e73b4d7 score=0.022 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [14:47] & [40:48] The LightRAG interface sidebar displays detailed metadata for selected nodes, including "ID," "Labels,
+   pattern=44bee5c6d74aad86 score=0.000 -> would-route solve-room
+     canonical-to-read: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
+     idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunk
+   pattern=63071b593c003aca score=0.043 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill 
+   pattern=bdbe71effd5a6da5 score=0.022 -> would-route trident
+     canonical-to-read: 02-Knowledge/Wiki/AI/Codex-Brain.md
+     idea: [03:31-04:12] The speaker details the exact file structure of Claude Code's auto-memory system, explaining how the `memo
+   pattern=419ba1b9f4adbf71 score=0.022 -> would-route meridian
+     canonical-to-read: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     idea: [04:44-05:00] The speaker draws a parallel between current AI memory limitations and an "almost abusive past" with early
+
+== top hits per pattern (for cross-check)
+   5034abe3713d0ca8 feature-add               -> visual-llm           (jaccard=0.032)
+     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and 
+     runner-up: meridian             (jaccard=0.020)
+   5e44dff32c9728de tooling-swap              -> meridian             (jaccard=0.032)
+     idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown fil
+     runner-up: trident              (jaccard=0.031)
+   8f1398bf7f9dae55 architecture-pattern      -> meridian             (jaccard=0.018)
+     idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatGPT shoehorning irrel
+     runner-up: kimiclaw             (jaccard=0.015)
+   61c74220eb5f29d7 anti-pattern              -> solve-room           (jaccard=0.029)
+     idea: [05:10-05:43] The speaker addresses the psychological fear of losing context when closing chat windows, explaining how t
+     runner-up: visual-llm           (jaccard=0.027)
+   b8654dbb9a1ca8da architecture-pattern      -> visual-llm           (jaccard=0.044)
+     idea: [01:13-01:21] The speaker outlines the progression from naive RAG to graph RAG and agentic RAG.
+     runner-up: meridian             (jaccard=0.036)
+   29498a1017685b16 architecture-pattern      -> meridian             (jaccard=0.024)
+     idea: [00:15] & [17:40] A dense, interactive network graph titled "My Graph KB" displays hundreds of interconnected nodes in r
+     runner-up: visual-llm           (jaccard=0.018)
+   fdf69726faef0824 anti-pattern              -> visual-llm           (jaccard=0.050)
+     idea: [28:24] & [32:57] An Excalidraw whiteboard illustrates the mechanics of vector embeddings, showing a 3D scatter plot wit
+     runner-up: meridian             (jaccard=0.042)
+   147c9c6f4e73b4d7 observability-gap         -> meridian             (jaccard=0.022)
+     idea: [14:47] & [40:48] The LightRAG interface sidebar displays detailed metadata for selected nodes, including "ID," "Labels,
+     runner-up: visual-llm           (jaccard=0.017)
+   44bee5c6d74aad86 architecture-pattern      -> solve-room           (jaccard=0.000)
+     idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunk
+     runner-up: anismin              (jaccard=0.000)
+   63071b593c003aca architecture-pattern      -> meridian             (jaccard=0.043)
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill 
+     runner-up: visual-llm           (jaccard=0.033)
+   bdbe71effd5a6da5 architecture-pattern      -> trident              (jaccard=0.022)
+     idea: [03:31-04:12] The speaker details the exact file structure of Claude Code's auto-memory system, explaining how the `memo
+     runner-up: kimiclaw             (jaccard=0.019)
+   419ba1b9f4adbf71 architecture-pattern      -> meridian             (jaccard=0.022)
+     idea: [04:44-05:00] The speaker draws a parallel between current AI memory limitations and an "almost abusive past" with early
+     runner-up: visual-llm           (jaccard=0.017)

@@ -1,0 +1,72 @@
+== BM25 dry-run: kQu5pWKS8GA_summary.md
+   patterns: 12  (after discardable filter)
+   subsystems: 8
+   bm25_match_threshold: 1.0
+
+== routing distribution (subsystem vs topical_page)
+   [topical] page.context-rot                 7
+   [system] visual-llm                       1
+   [topical] page.vector-databases            1
+   [topical] page.codex-brain                 1
+   [topical] page.karpathy-auto-research      1
+   [system] meridian                         1
+   target_kind: {'subsystem': 2, 'topical_page': 10}
+
+== tier distribution
+   high                   9
+   medium                 2
+   low                    1
+
+== best-score statistics (across all patterns)
+   min=2.641  max=17.704
+   mean=9.062  median=8.090
+   stdev=4.919
+
+== actual known-gap matches (2 / 12 patterns)
+   pattern=8f1398bf7f9dae55 concept=LightRAG -> 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+     idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatGPT shoehorning irrel
+   pattern=147c9c6f4e73b4d7 concept=LightRAG -> 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+     idea: [14:47] & [40:48] The LightRAG interface sidebar displays detailed metadata for selected nodes, including "ID," "Labels,
+
+== per-pattern detail
+   5034abe3713d0ca8 feature-add               -> [subsystem] visual-llm                     score= 6.41  tier=high
+     close call: visual-llm=6.41 vs page.context-rot=6.10
+     idea: [00:00-00:25] The speaker introduces the core challenge of getting AI systems to reliably access past conversations and documents,
+     canonical: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
+     write_target: 02-Knowledge/Wiki/AI/
+   5e44dff32c9728de tooling-swap              -> [topical_page] page.context-rot               score=16.53  tier=high
+     idea: [02:49-03:30] The speaker explains Level 1: Auto Memory, describing how Claude Code automatically generates markdown files in the 
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+   8f1398bf7f9dae55 architecture-pattern      -> [topical_page] page.context-rot               score= 7.63  tier=high
+     idea: [04:27-04:43] The speaker critiques auto-memory as "cute but not that useful," comparing it to ChatGPT shoehorning irrelevant past
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+     write_target: 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+   61c74220eb5f29d7 anti-pattern              -> [topical_page] page.context-rot               score= 5.50  tier=medium
+     idea: [05:10-05:43] The speaker addresses the psychological fear of losing context when closing chat windows, explaining how this "neuro
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+   b8654dbb9a1ca8da architecture-pattern      -> [topical_page] page.context-rot               score=17.70  tier=high
+     idea: [01:13-01:21] The speaker outlines the progression from naive RAG to graph RAG and agentic RAG.
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+   29498a1017685b16 architecture-pattern      -> [topical_page] page.context-rot               score= 8.55  tier=high
+     idea: [00:15] & [17:40] A dense, interactive network graph titled "My Graph KB" displays hundreds of interconnected nodes in red, blue, 
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+   fdf69726faef0824 anti-pattern              -> [topical_page] page.vector-databases          score=11.43  tier=high
+     idea: [28:24] & [32:57] An Excalidraw whiteboard illustrates the mechanics of vector embeddings, showing a 3D scatter plot with semantic
+     canonical: 02-Knowledge/Wiki/AI/Vector-Databases.md
+   147c9c6f4e73b4d7 observability-gap         -> [topical_page] page.codex-brain               score= 2.64  tier=high
+     idea: [14:47] & [40:48] The LightRAG interface sidebar displays detailed metadata for selected nodes, including "ID," "Labels," "Degree,
+     canonical: 02-Knowledge/Wiki/AI/Codex-Brain.md
+     write_target: 02-Knowledge/Wiki/research/LightRAG-Evaluation.md
+   44bee5c6d74aad86 architecture-pattern      -> [topical_page] page.karpathy-auto-research    score= 3.06  tier=low
+     idea: [31:23] A hand-drawn diagram breaks down a document into numbered sections (1, 2, 3), visually explaining the text chunking proces
+     canonical: 02-Knowledge/Wiki/AI/Andre-Karpathy's-Auto-Research-Project.md
+   63071b593c003aca architecture-pattern      -> [subsystem] meridian                       score= 5.55  tier=medium
+     idea: [00:34-00:41] The speaker emphasizes that the video provides a "roadmap" to help viewers understand their current skill level and 
+     canonical: 02-Knowledge/Wiki/AI/Meridian-Brain.md
+     write_target: 02-Knowledge/Wiki/research/
+   bdbe71effd5a6da5 architecture-pattern      -> [topical_page] page.context-rot               score=13.01  tier=high
+     idea: [03:31-04:12] The speaker details the exact file structure of Claude Code's auto-memory system, explaining how the `memory.md` fil
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
+   419ba1b9f4adbf71 architecture-pattern      -> [topical_page] page.context-rot               score=10.73  tier=high
+     idea: [04:44-05:00] The speaker draws a parallel between current AI memory limitations and an "almost abusive past" with early chatbots,
+     canonical: 02-Knowledge/Wiki/Harness-Insights/Context-Rot.md
