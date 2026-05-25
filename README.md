@@ -69,15 +69,50 @@ After routing, patterns pass through a 5-way decision classifier:
 CLI:
 
 ```bash
-# Keyword matcher (fast, uses snapshot subsystem keywords)
+# Default: BM25 matcher (uses corpus_map + topical pages, richer routing)
 python tools/decide.py --summary tests/fixtures/kQu5pWKS8GA_summary.md
 
-# BM25 matcher (uses corpus_map + topical pages)
-python tools/decide.py --summary tests/fixtures/kQu5pWKS8GA_summary.md --matcher bm25
+# Keyword matcher (fast, uses snapshot subsystem keywords only)
+python tools/decide.py --summary tests/fixtures/kQu5pWKS8GA_summary.md --matcher keyword
 
 # JSON output for downstream automation
 python tools/decide.py --summary <path> --json
 ```
+
+## Automations (v0.2)
+
+### Queue processor
+
+Runs the full pipeline from an existing `summary.md`:
+
+```bash
+# Dry-run: see what would happen without writing anything
+python automations/queue_processor.py --summary <path/to/summary.md> --dry-run
+
+# Real run: writes Obsidian digest + conflict log
+python automations/queue_processor.py --summary <path/to/summary.md>
+
+# Also create Linear tracker issues for integrate decisions
+LINEAR_API_KEY=... python automations/queue_processor.py --summary <path> --create-linear-issues
+```
+
+Output:
+- `data/digests/<video_id>.md` — Obsidian digest with all routed patterns
+- `data/conflicts/<YYYY-MM>.md` — conflict-tier patterns for weekly synthesis
+- Linear issues (optional) — one per `integrate` decision
+
+### Inventory refresh
+
+Rebuilds `inventory/snapshot.yaml` from live git repos under `C:\Projects\*`:
+
+```bash
+python automations/inventory_refresh.py
+```
+
+Scans recursively for `.git` repos, matches them to subsystems by name or
+override map, and updates `last_seen` for any with commits in the last 30 days.
+Safe to run daily; writes atomically and leaves the old snapshot in place on
+error.
 
 ## Integration with distill-youtube
 

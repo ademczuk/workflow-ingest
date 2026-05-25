@@ -31,7 +31,7 @@ def main() -> int:
     ap.add_argument("--summary", required=True, help="Path to summary.md")
     ap.add_argument("--snapshot", default=str(PROJECT / "inventory" / "snapshot.yaml"))
     ap.add_argument("--corpus", default=str(PROJECT / "inventory" / "corpus_map_v1.yaml"))
-    ap.add_argument("--matcher", default="keyword", choices=["keyword", "bm25"])
+    ap.add_argument("--matcher", default="bm25", choices=["keyword", "bm25"])
     ap.add_argument("--json", action="store_true", help="Emit JSON instead of text")
     args = ap.parse_args()
 
@@ -43,11 +43,11 @@ def main() -> int:
         print("No patterns extracted from summary.", file=sys.stderr)
         return 1
 
+    corpus = load_corpus_map(Path(args.corpus))
     if args.matcher == "bm25":
-        corpus = load_corpus_map(Path(args.corpus))
         routed = match_all_bm25(patterns, corpus, snapshot)
     else:
-        routed = match_all(patterns, snapshot)
+        routed = match_all(patterns, snapshot, corpus=corpus)
 
     audits = [audit(p, snapshot, frozenset()) for p in routed]
     decisions = decide_all(routed, audits, frozenset())

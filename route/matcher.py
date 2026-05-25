@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from inventory.corpus_map import CorpusMap
 from inventory.model import Snapshot, Subsystem
 from pattern.model import Pattern, Routing
 from route.confidence import score as score_confidence
@@ -52,19 +53,30 @@ def _tier_for(confidence: float, match_state: str) -> str:
     return "low"
 
 
-def match(p: Pattern, snapshot: Snapshot) -> Pattern:
+def _write_target_for(subsystem: Subsystem, corpus: CorpusMap | None) -> str | None:
+    if corpus is None:
+        return None
+    for entry in corpus.subsystems:
+        if entry.slug == subsystem.slug:
+            return entry.write_target_when_novel
+    return None
+
+
+def match(p: Pattern, snapshot: Snapshot, *, corpus: CorpusMap | None = None) -> Pattern:
     subsystem, overlap = _best_match(p, snapshot)
     match_state = _match_state_for(overlap)
     confidence = score_confidence(p, snapshot.schema_version)
     tier = _tier_for(confidence, match_state)
+    write_target = _write_target_for(subsystem, corpus)
     routing = Routing(
         subsystem_slug=subsystem.slug,
         match_state=match_state,
         tier=tier,
         snapshot_version=snapshot.schema_version,
+        write_target=write_target,
     )
     return p.with_routing(routing)
 
 
-def match_all(patterns: list[Pattern], snapshot: Snapshot) -> list[Pattern]:
-    return [match(p, snapshot) for p in patterns]
+def match_all(patterns: list[Pattern], snapshot: Snapshot, *, corpus: CorpusMap | None = None) -> list[Pattern]:
+    return [match(p, snapshot, corpus=corpus) for p in patterns]

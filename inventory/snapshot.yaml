@@ -1,6 +1,6 @@
 schema_version: '1.0'
-generated_at: '2026-05-06T20:00:00'
-generator: workflow-ingest/inventory/refresh.py@v0-handcrafted-aligned-with-corpus-map-v1
+generated_at: '2026-05-25T20:25:30.065250+00:00'
+generator: inventory_refresh.py
 subsystems:
 - slug: anismin
   display_name: Anismin (Floor 1 strategist brain, AnisminOS federation)
@@ -11,6 +11,9 @@ subsystems:
   - kind: memory_file
     ref: reference_anisminos_cross_floor_protocol.md
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\Anismin\anismin-openclaw
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: opus 4.7 strategist federation cross-floor dispatch port 18889
 - slug: meridian
   display_name: Meridian (codex/gpt-5.4 brain, evolve-loop iterations)
@@ -21,6 +24,9 @@ subsystems:
   - kind: memory_file
     ref: reference_meridian_context_overflow.md
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\Meridian\meridian-openclaw
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: meridian codex bridge discord critic research evolve loop
 - slug: kimiclaw
   display_name: KimiClawSwarm (KCS) classic vs crew Persona+Verify
@@ -35,6 +41,9 @@ subsystems:
   - kind: operator_bullet
     ref: clawfish discord fallback opus
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\clawdie-crm
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: clawfish discord opus fallback openclaw saturation
 - slug: solve-room
   display_name: Solve-Room boardroom autonomy loop (4 brains)
@@ -52,6 +61,9 @@ subsystems:
   - kind: obsidian_path
     ref: developer/visual-llm/operational-status-260504.md
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\visual-llm
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: visual qwen3.6 parakeet kokoro mmproj llama-server keyframes scene detect
     transcript
 - slug: brutal-harness
@@ -106,6 +118,9 @@ subsystems:
   - kind: tracker_query
     ref: type:* status:*
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\_Jobs\Collaborations\Andrew\nimbalyst-1-clone
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: tracker nimbalyst bug task idea plan item
 - slug: meta.cross-cutting
   display_name: Cross-cutting patterns (provenance-only)
@@ -113,6 +128,9 @@ subsystems:
   - kind: operator_bullet
     ref: schema observability logging audit policy-as-code pipeline
     last_seen: '2026-05-06T20:00:00'
+  - kind: commit
+    ref: C:\Projects\workflow-ingest
+    last_seen: '2026-05-25T20:25:30.065250+00:00'
   notes: schema observability logging audit policy chain context branch git
 - slug: page.vector-databases
   display_name: Vector Databases
