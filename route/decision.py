@@ -33,7 +33,7 @@ def decide(
       - discard:    audit failed OR pattern has zero evidence
       - conflict:   match_state=red OR tier=conflict
       - already-covered: pattern_id seen before
-      - wiki-only:  topical_page target OR low tier with no known gap
+      - wiki-only:  topical_page target OR low tier OR no write_target
       - integrate:  audit passes, high/medium tier, has write_target
     """
     routing = pattern.routing
