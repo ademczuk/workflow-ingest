@@ -34,9 +34,24 @@ PORT = int(os.environ.get("KCS_DISTILL_PORT", "9789"))
 BIND = os.environ.get("KCS_DISTILL_HOST", "127.0.0.1")
 WORKFLOW_INGEST = Path(os.environ.get("WORKFLOW_INGEST_DIR", r"C:/Projects/workflow-ingest"))
 DISTILL = WORKFLOW_INGEST / "tools" / "distill.py"
+DECIDE = WORKFLOW_INGEST / "tools" / "decide.py"
+VISUAL_LLM_DATA = Path(os.environ.get("VISUAL_LLM_DIR", r"C:/Projects/visual-llm")) / "data"
 PY = sys.executable
 JOB_TTL_S = 3600
 DISTILL_TIMEOUT_S = int(os.environ.get("KCS_DISTILL_TIMEOUT_S", "2000"))
+
+# Distill-list cache. The dashboard polls /distill/list, and re-scanning the
+# data directory (currently ~20 videos, plus per-video decide.py runs to
+# resolve patterns counts) is expensive. Cache the whole list response for
+# DISTILL_LIST_TTL_S seconds. Per-video verdict is also persisted as a
+# verdict.json sidecar so cold caches don't re-run decide for every video.
+DISTILL_LIST_TTL_S = int(os.environ.get("KCS_DISTILL_LIST_TTL_S", "60"))
+_distill_list_cache: dict = {"ts": 0.0, "videos": []}
+_distill_list_lock = threading.Lock()
+# Path-safety: YouTube video IDs are 11 chars from this alphabet. Anything
+# else is rejected as a path-traversal attempt before we touch the filesystem.
+import re as _re
+_YT_ID_RE = _re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 # VRAM-mode arbiter integration: if qwen36 is not loaded when a job lands,
 # the worker thread will run this script to flip the GPU back from brutal
@@ -368,9 +383,219 @@ def job_status(job_id):
     })
 
 
+# ---------------------------------------------------------------------------
+# Distill-list endpoints for the MeridianOS Distill dashboard app.
+# /distill/list      — scan VISUAL_LLM/data/* for finished summaries with
+#                       per-video verdict counts (cached 60s in memory)
+# /distill/<vid>/summary — return raw summary.md as text/markdown
+# Both token-gated via _check_token() (404 on miss, federation doctrine).
+# ---------------------------------------------------------------------------
+
+
+def _parse_summary_md_frontmatter(md_path: Path) -> dict:
+    """Read the title line out of a summary.md YAML-ish frontmatter block.
+    Frontmatter is a leading '---' / '---' fence with `key: value` lines.
+    Returns {} on any parse failure (caller falls back to video_id)."""
+    out: dict = {}
+    try:
+        with md_path.open("r", encoding="utf-8", errors="replace") as f:
+            first = f.readline().rstrip()
+            if first.strip() != "---":
+                return out
+            for _ in range(60):  # cap, frontmatter is never huge
+                line = f.readline()
+                if not line:
+                    break
+                s = line.rstrip()
+                if s.strip() == "---":
+                    break
+                if ":" in s:
+                    k, _, v = s.partition(":")
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k and v:
+                        out[k] = v
+    except Exception:
+        return {}
+    return out
+
+
+def _compute_video_verdict(out_dir: Path, vid: str, force: bool = False) -> dict:
+    """Get verdict counts (total/integrate/wiki + worth/headline) for a video.
+    Reads/writes a sidecar verdict.json so we only invoke decide.py once per
+    summary. Returns a dict with at least:
+        {patterns_total, patterns_integrate, patterns_wiki, worth, headline}
+    On failure returns the same shape with zeroes and worth=False."""
+    summary_md = out_dir / "summary.md"
+    sidecar = out_dir / "verdict.json"
+    if not summary_md.exists():
+        return {"patterns_total": 0, "patterns_integrate": 0,
+                "patterns_wiki": 0, "worth": False,
+                "headline": "no summary.md"}
+    if sidecar.exists() and not force:
+        try:
+            sm_mt = summary_md.stat().st_mtime
+            sc_mt = sidecar.stat().st_mtime
+            if sc_mt >= sm_mt - 1:
+                return json.loads(sidecar.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    try:
+        r = subprocess.run(
+            [PY, "-u", str(DECIDE), "--summary", str(summary_md),
+             "--matcher", "bm25", "--json"],
+            capture_output=True, text=True, timeout=180,
+            encoding="utf-8", errors="replace",
+        )
+        if r.returncode != 0:
+            return {"patterns_total": 0, "patterns_integrate": 0,
+                    "patterns_wiki": 0, "worth": False,
+                    "headline": "decide.py failed",
+                    "error": (r.stderr or r.stdout or "")[-200:]}
+        patterns = json.loads(r.stdout)
+    except Exception as exc:
+        return {"patterns_total": 0, "patterns_integrate": 0,
+                "patterns_wiki": 0, "worth": False,
+                "headline": f"decide error: {type(exc).__name__}"}
+
+    counts: dict[str, int] = {}
+    for p in patterns:
+        counts[p["decision"]] = counts.get(p["decision"], 0) + 1
+    n_integrate = counts.get("integrate", 0)
+    n_wiki = counts.get("wiki-only", 0)
+    n_covered = counts.get("already-covered", 0)
+    if n_integrate > 0:
+        worth, headline = True, f"Worth integrating: {n_integrate} high-value pattern(s)"
+    elif n_wiki > 0:
+        worth, headline = True, f"Worth a skim: {n_wiki} wiki-only insight(s), nothing to integrate"
+    elif n_covered > 0:
+        worth, headline = False, "Already covered: nothing new here"
+    else:
+        worth, headline = False, "Probably skip: no actionable patterns"
+
+    out = {
+        "patterns_total": len(patterns),
+        "patterns_integrate": n_integrate,
+        "patterns_wiki": n_wiki,
+        "patterns_covered": n_covered,
+        "worth": worth,
+        "headline": headline,
+    }
+    try:
+        sidecar.write_text(json.dumps(out), encoding="utf-8")
+    except Exception:
+        pass
+    return out
+
+
+def _build_video_entry(vid_dir: Path) -> dict | None:
+    vid = vid_dir.name
+    if not _YT_ID_RE.match(vid):
+        return None
+    summary_md = vid_dir / "summary.md"
+    summary_json = vid_dir / "summary.json"
+    if not (summary_md.exists() and summary_json.exists()):
+        return None
+
+    title = vid
+    url = f"https://www.youtube.com/watch?v={vid}"
+    duration_s = None
+    try:
+        sj = json.loads(summary_json.read_text(encoding="utf-8"))
+        title = (sj.get("title") or sj.get("video_title") or "").strip() or title
+        url = (sj.get("url") or url)
+        duration_s = sj.get("duration_s")
+    except Exception:
+        pass
+
+    fm = _parse_summary_md_frontmatter(summary_md)
+    if fm.get("title"):
+        title = fm["title"]
+    if not duration_s and fm.get("duration_s"):
+        try:
+            duration_s = int(fm["duration_s"])
+        except Exception:
+            duration_s = None
+
+    st = summary_md.stat()
+    verdict = _compute_video_verdict(vid_dir, vid)
+
+    from datetime import datetime, timezone
+    mtime_iso = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).isoformat()
+    return {
+        "video_id": vid,
+        "title": title[:240],
+        "url": url,
+        "duration_s": duration_s,
+        "mtime": mtime_iso,
+        "size_bytes": st.st_size,
+        "patterns_total": verdict.get("patterns_total", 0),
+        "patterns_integrate": verdict.get("patterns_integrate", 0),
+        "patterns_wiki": verdict.get("patterns_wiki", 0),
+        "worth": bool(verdict.get("worth", False)),
+        "headline": verdict.get("headline", ""),
+    }
+
+
+def _scan_videos() -> list[dict]:
+    if not VISUAL_LLM_DATA.is_dir():
+        return []
+    entries: list[dict] = []
+    try:
+        for child in VISUAL_LLM_DATA.iterdir():
+            if not child.is_dir():
+                continue
+            try:
+                e = _build_video_entry(child)
+            except Exception:
+                e = None
+            if e:
+                entries.append(e)
+    except Exception:
+        return entries
+    entries.sort(key=lambda x: x["mtime"], reverse=True)
+    return entries
+
+
+@app.route("/distill/list")
+def distill_list():
+    _check_token()
+    now = time.time()
+    with _distill_list_lock:
+        if (now - _distill_list_cache["ts"]) < DISTILL_LIST_TTL_S and _distill_list_cache["videos"]:
+            videos = _distill_list_cache["videos"]
+            cached_age = round(now - _distill_list_cache["ts"], 1)
+            return jsonify({"videos": videos, "cached_age_s": cached_age,
+                             "ttl_s": DISTILL_LIST_TTL_S, "count": len(videos)})
+    videos = _scan_videos()
+    with _distill_list_lock:
+        _distill_list_cache["ts"] = time.time()
+        _distill_list_cache["videos"] = videos
+    return jsonify({"videos": videos, "cached_age_s": 0.0,
+                     "ttl_s": DISTILL_LIST_TTL_S, "count": len(videos)})
+
+
+@app.route("/distill/<video_id>/summary")
+def distill_video_summary(video_id):
+    _check_token()
+    if not _YT_ID_RE.match(video_id):
+        return jsonify({"error": "invalid_video_id"}), 400
+    summary_md = VISUAL_LLM_DATA / video_id / "summary.md"
+    if not summary_md.is_file():
+        return jsonify({"error": "not_found", "video_id": video_id}), 404
+    try:
+        body = summary_md.read_text(encoding="utf-8")
+    except Exception as exc:
+        return jsonify({"error": "read_failed",
+                         "detail": f"{type(exc).__name__}: {exc}"}), 500
+    from flask import Response
+    return Response(body, mimetype="text/markdown; charset=utf-8")
+
+
 if __name__ == "__main__":
     if not DISTILL.exists():
         print(f"FATAL: distill.py not found at {DISTILL}", file=sys.stderr)
         sys.exit(1)
     print(f"distill_service on {BIND}:{PORT}  token={'set' if TOKEN else 'UNSET'}  distill={DISTILL}")
+    print(f"  visual_llm_data={VISUAL_LLM_DATA}  list_ttl={DISTILL_LIST_TTL_S}s")
     app.run(host=BIND, port=PORT, threaded=True)
