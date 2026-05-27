@@ -38,6 +38,17 @@ PY = sys.executable
 JOB_TTL_S = 3600
 DISTILL_TIMEOUT_S = int(os.environ.get("KCS_DISTILL_TIMEOUT_S", "2000"))
 
+# VRAM-mode arbiter integration: if qwen36 is not loaded when a job lands,
+# the worker thread will run this script to flip the GPU back from brutal
+# (or any other mode) before dispatching distill.py. Without this, the
+# service used to 503 the request immediately and the arbiter never saw the
+# demand because the job was rejected before /healthz could count it.
+WITH_BRUTAL_SCRIPT = os.environ.get(
+    "KCS_VRAM_ARBITER",
+    r"C:/Projects/Claude_Code/Job_Orchestrator/scripts/with_brutal_llm.py",
+)
+ENSURE_QWEN36_TIMEOUT_S = int(os.environ.get("KCS_ENSURE_QWEN36_TIMEOUT_S", "180"))
+
 # Optional clawfish-opus "take" layered on the mechanical verdict (Discord
 # presentation). Calls the starfish-reason shim (-> clawfish-opus). Best-effort:
 # the mechanical verdict stands if the take fails or is disabled.
@@ -114,6 +125,48 @@ def _check_token():
 
 def _worker(job_id: str, url: str):
     try:
+        # Pre-flight: ensure qwen36 is alive. If the VRAM is currently loaded
+        # with brutal-llm (or anything else), trigger an auto-flip back to
+        # qwen36 before dispatching. This is the path that lets distill survive
+        # the system being in brutal mode — without it, distill_service used to
+        # 503 immediately and the arbiter never saw the demand because the job
+        # was rejected before /healthz could count it. See 2026-05-27 incident.
+        ok, why = _qwen_dispatcher_alive(timeout_s=4.0)
+        if not ok:
+            print(f"distill_service [{job_id}]: qwen36 unresponsive ({why}); "
+                  f"attempting ensure qwen36", file=sys.stderr, flush=True)
+            try:
+                ensure = subprocess.run(
+                    [PY, "-u", WITH_BRUTAL_SCRIPT, "ensure", "qwen36"],
+                    capture_output=True, text=True, timeout=ENSURE_QWEN36_TIMEOUT_S,
+                    encoding="utf-8", errors="replace",
+                )
+                if ensure.returncode != 0:
+                    with _lock:
+                        _jobs[job_id].update(
+                            status="done",
+                            verdict={"ok": False, "error": "ensure_qwen36_failed",
+                                     "detail": (ensure.stderr or ensure.stdout or "")[-400:]},
+                        )
+                    return
+                ok, why = _qwen_dispatcher_alive(timeout_s=4.0)
+                if not ok:
+                    with _lock:
+                        _jobs[job_id].update(
+                            status="done",
+                            verdict={"ok": False, "error": "qwen36_still_unresponsive_after_ensure",
+                                     "detail": why},
+                        )
+                    return
+            except subprocess.TimeoutExpired:
+                with _lock:
+                    _jobs[job_id].update(
+                        status="done",
+                        verdict={"ok": False, "error": "ensure_qwen36_timeout",
+                                 "detail": f"with_brutal_llm ensure qwen36 exceeded {ENSURE_QWEN36_TIMEOUT_S}s"},
+                    )
+                return
+
         r = subprocess.run(
             [PY, "-u", str(DISTILL), url, "--json"],
             capture_output=True, text=True, timeout=DISTILL_TIMEOUT_S,
@@ -145,6 +198,25 @@ def healthz():
     return jsonify({"ok": True, "jobs": n, "token": bool(TOKEN)})
 
 
+QWEN_URL = os.environ.get("KCS_QWEN_BASE_URL", "http://127.0.0.1:7870")
+
+
+def _qwen_dispatcher_alive(timeout_s: float = 5.0) -> tuple[bool, str]:
+    """Probe /slots with a tight timeout. /health staying 200 while /slots
+    times out is the zombie-dispatcher signature seen 2026-05-25/26 — caller
+    should refuse new work loudly rather than dispatching into a 30-min void."""
+    import urllib.request, urllib.error
+    try:
+        with urllib.request.urlopen(f"{QWEN_URL}/slots", timeout=timeout_s) as r:
+            if 200 <= r.status < 300:
+                return True, ""
+            return False, f"slots http {r.status}"
+    except urllib.error.URLError as e:
+        return False, f"slots unreachable: {e.reason}"
+    except Exception as e:
+        return False, f"slots probe failed: {type(e).__name__}: {e}"
+
+
 @app.route("/distill", methods=["POST"])
 def distill():
     _check_token()
@@ -152,6 +224,13 @@ def distill():
     url = (body.get("url") or "").strip()
     if not url:
         return jsonify({"error": "url is required"}), 400
+    # NOTE: we no longer probe /slots here and 503 on failure. The /slots check
+    # moved into the worker, where it can also trigger an `ensure qwen36`
+    # auto-flip if the system is currently in brutal-llm mode. Rejecting at
+    # this gate prevented the arbiter from ever seeing distill demand (job was
+    # rejected before /healthz could register it). Registering the job and
+    # letting the worker handle the switch makes the auto-flip path actually
+    # reachable.
     job_id = uuid.uuid4().hex[:12]
     now = time.time()
     with _lock:

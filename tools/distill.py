@@ -23,7 +23,22 @@ import os
 import re
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
+
+
+def _parakeet_alive(timeout_s: float = 2.0) -> bool:
+    """Probe the Parakeet STT container on 127.0.0.1:5093. Returns False if
+    Docker is down, the container is not running, or the health endpoint hangs.
+    Used to choose between --use-parakeet (default) and --prefer-subs (fallback
+    to YouTube auto-captions) so a stopped Docker daemon doesn't silently hang
+    the summarizer for 30 min."""
+    url = os.environ.get("PARAKEET_HEALTH_URL", "http://127.0.0.1:5093/health")
+    try:
+        with urllib.request.urlopen(url, timeout=timeout_s) as r:
+            return 200 <= r.status < 300
+    except Exception:
+        return False
 
 PROJECT = Path(__file__).resolve().parent.parent
 VISUAL_LLM = Path(os.environ.get("VISUAL_LLM_DIR", r"C:/Projects/visual-llm"))
@@ -88,8 +103,15 @@ def main() -> int:
     if args.force or not have_summary:
         if not SUMMARIZE.exists():
             return _fail(args.json, "summarizer_missing", f"youtube_summarize.py not found at {SUMMARIZE}")
+        # Default to YouTube auto-captions: faster, more reliable, and Parakeet
+        # has hung on real videos even when /health was 200 (one such incident
+        # ate a 30-min subprocess budget). Opt in to Parakeet only when subs are
+        # known-unavailable or KCS_DISTILL_USE_PARAKEET=1 is set.
+        force_parakeet = os.environ.get("KCS_DISTILL_USE_PARAKEET", "").strip() in ("1", "true", "yes")
+        stt_flag = "--use-parakeet" if (force_parakeet and _parakeet_alive()) else "--prefer-subs"
+        print(f"distill: stt_flag={stt_flag} (force_parakeet={force_parakeet})", file=sys.stderr, flush=True)
         r = _run([PY, "-u", str(SUMMARIZE), args.url, "--max-keyframes", "12",
-                  "--scene-detect", "auto", "--use-parakeet"], args.summarize_timeout)
+                  "--scene-detect", "auto", stt_flag], args.summarize_timeout)
         summarized_now = True
         if not (summary_md.exists() and summary_md.stat().st_size > 0):
             tail = (r.stderr or r.stdout or "")[-500:]

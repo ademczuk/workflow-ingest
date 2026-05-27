@@ -21,13 +21,16 @@ _DISCARDABLE_RE = re.compile(
 
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 _KEY_POINTS_RE = re.compile(
-    r"^##\s+Key points\s*\n(.*?)(?=^##\s|\Z)", re.DOTALL | re.MULTILINE
+    r"^##\s+Key points[^\n]*\n(.*?)(?=^##\s|\Z)",
+    re.DOTALL | re.MULTILINE | re.IGNORECASE,
 )
 _NOTABLE_VISUALS_RE = re.compile(
-    r"^##\s+Notable visuals\s*\n(.*?)(?=^##\s|\Z)", re.DOTALL | re.MULTILINE
+    r"^##\s+Notable visuals[^\n]*\n(.*?)(?=^##\s|\Z)",
+    re.DOTALL | re.MULTILINE | re.IGNORECASE,
 )
 _NOTABLE_SPOKEN_RE = re.compile(
-    r"^##\s+Notable spoken content\s*\n(.*?)(?=^##\s|\Z)", re.DOTALL | re.MULTILINE
+    r"^##\s+Notable spoken content[^\n]*\n(.*?)(?=^##\s|\Z)",
+    re.DOTALL | re.MULTILINE | re.IGNORECASE,
 )
 _BULLET_RE = re.compile(r"^[\*\-]\s+(.+?)(?=\n[\*\-]\s|\n\n|\Z)", re.DOTALL | re.MULTILINE)
 
