@@ -20,19 +20,43 @@ _DISCARDABLE_RE = re.compile(
 
 
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
-_KEY_POINTS_RE = re.compile(
-    r"^##\s+Key points[^\n]*\n(.*?)(?=^##\s|\Z)",
-    re.DOTALL | re.MULTILINE | re.IGNORECASE,
+
+# Markdown structure recognizers (line-based, format-tolerant).
+# H2 header: starts with exactly two `#` followed by whitespace. The trailing
+# `(?!#)` is unnecessary because we match `##\s+`, which `###` (followed by a
+# non-space `#`) does not satisfy.
+_H2_RE = re.compile(r"^##\s+(.*?)\s*$")
+# A bullet line: starts with optional whitespace + `*` or `-` + space.
+_BULLET_START_RE = re.compile(r"^\s*[\*\-]\s+(.*)$")
+# Continuation of a bullet: indented (non-empty, not a bullet, not a header).
+_INDENT_CONT_RE = re.compile(r"^\s+\S")
+
+
+# Fuzzy keyword buckets for classifying H2 sections.
+# Each tuple: (bucket name, sequence of case-insensitive substrings; any hit assigns the bucket).
+# Order matters: `notable_spoken` is checked BEFORE `notable_visuals` because
+# real-world drift like "Notable spoken content (claims/data not in visuals,
+# with [MM:SS])" contains the substring "visual" inside a parenthetical, and
+# the spoken signal is the stronger match.
+_SECTION_BUCKETS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("key_points", ("key point", "key insight", "main point")),
+    ("notable_spoken", ("spoken", "audio-only", "narration")),
+    ("notable_visuals", ("visual", "on screen", "slide")),
 )
-_NOTABLE_VISUALS_RE = re.compile(
-    r"^##\s+Notable visuals[^\n]*\n(.*?)(?=^##\s|\Z)",
-    re.DOTALL | re.MULTILINE | re.IGNORECASE,
-)
-_NOTABLE_SPOKEN_RE = re.compile(
-    r"^##\s+Notable spoken content[^\n]*\n(.*?)(?=^##\s|\Z)",
-    re.DOTALL | re.MULTILINE | re.IGNORECASE,
-)
-_BULLET_RE = re.compile(r"^[\*\-]\s+(.+?)(?=\n[\*\-]\s|\n\n|\Z)", re.DOTALL | re.MULTILINE)
+
+
+def _classify_header(header_text: str) -> str | None:
+    """Return bucket name if the header matches a known bucket, else None.
+
+    Matching is case-insensitive substring against the header text. The first
+    matching bucket in declaration order wins (order is documented above the
+    bucket table). Headers that don't match any bucket are skipped, not raised.
+    """
+    lowered = header_text.lower()
+    for bucket, needles in _SECTION_BUCKETS:
+        if any(needle in lowered for needle in needles):
+            return bucket
+    return None
 
 
 _TYPE_RULES: list[tuple[PatternType, tuple[str, ...]]] = [
@@ -56,16 +80,76 @@ def _strip_md(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip()).strip("*").strip()
 
 
-def _extract_section_bullets(section_text: str) -> list[str]:
-    bullets = []
-    for m in _BULLET_RE.finditer(section_text):
-        cleaned = _strip_md(m.group(1))
-        if not cleaned:
+def _extract_section_bullets(section_lines: list[str]) -> list[str]:
+    """Extract bullets from a list of raw lines (already scoped to one H2 section).
+
+    Bullets are any line starting with `* ` or `- ` after optional whitespace.
+    Subsequent non-bullet, non-blank, indented lines are treated as
+    continuation of the prior bullet (so wrapped bullets stay intact).
+    Blank lines, header lines, and other content end the current bullet.
+    """
+    bullets: list[str] = []
+    current: list[str] | None = None
+
+    def _flush() -> None:
+        nonlocal current
+        if current is None:
+            return
+        cleaned = _strip_md(" ".join(current))
+        if cleaned and not _DISCARDABLE_RE.search(cleaned):
+            bullets.append(cleaned)
+        current = None
+
+    for raw_line in section_lines:
+        line = raw_line.rstrip("\n")
+        if not line.strip():
+            _flush()
             continue
-        if _DISCARDABLE_RE.search(cleaned):
+        bullet_match = _BULLET_START_RE.match(line)
+        if bullet_match:
+            _flush()
+            current = [bullet_match.group(1)]
             continue
-        bullets.append(cleaned)
+        if current is not None and _INDENT_CONT_RE.match(line):
+            current.append(line.strip())
+            continue
+        # Any other line ends the current bullet but does not start one.
+        _flush()
+
+    _flush()
     return bullets
+
+
+def _split_into_sections(text: str) -> list[tuple[str, list[str]]]:
+    """Walk the markdown line-by-line and yield (h2_header_text, body_lines).
+
+    Sections are bounded by H1 or H2 headers; H3+ lines stay inside their
+    enclosing H2 section. Content before the first H2 is dropped.
+    """
+    sections: list[tuple[str, list[str]]] = []
+    current_header: str | None = None
+    current_body: list[str] = []
+
+    for line in text.splitlines(keepends=False):
+        h2 = _H2_RE.match(line)
+        if h2:
+            if current_header is not None:
+                sections.append((current_header, current_body))
+            current_header = h2.group(1).strip()
+            current_body = []
+            continue
+        # An H1 also closes the current H2 section.
+        if current_header is not None and line.startswith("# ") and not line.startswith("## "):
+            sections.append((current_header, current_body))
+            current_header = None
+            current_body = []
+            continue
+        if current_header is not None:
+            current_body.append(line)
+
+    if current_header is not None:
+        sections.append((current_header, current_body))
+    return sections
 
 
 def _idea_from_bullet(bullet: str) -> str:
@@ -97,10 +181,22 @@ def parse_summary_md(path: Path) -> list[Pattern]:
     )
 
     bullets: list[str] = []
-    for section_re in (_KEY_POINTS_RE, _NOTABLE_VISUALS_RE, _NOTABLE_SPOKEN_RE):
-        m = section_re.search(text)
-        if m:
-            bullets.extend(_extract_section_bullets(m.group(1)))
+    # Track which buckets have already yielded bullets. A bucket only claims
+    # its slot after producing at least one bullet, so a brittle false-positive
+    # header like "Joint summary (audio + visual)" doesn't shadow the real
+    # "Notable visuals" section that follows it.
+    filled_buckets: set[str] = set()
+    for header_text, body_lines in _split_into_sections(text):
+        bucket = _classify_header(header_text)
+        if bucket is None:
+            continue
+        if bucket in filled_buckets:
+            continue
+        section_bullets = _extract_section_bullets(body_lines)
+        if not section_bullets:
+            continue
+        filled_buckets.add(bucket)
+        bullets.extend(section_bullets)
 
     patterns: list[Pattern] = []
     seen_ideas: set[str] = set()

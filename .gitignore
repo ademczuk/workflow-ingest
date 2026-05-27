@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 .distill_service.log
 .distill_service.log.err
+.bench-summarize.log
+.live-test-job.txt
+.qwen36_watchdog.log

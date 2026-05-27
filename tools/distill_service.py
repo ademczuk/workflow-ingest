@@ -49,6 +49,98 @@ WITH_BRUTAL_SCRIPT = os.environ.get(
 )
 ENSURE_QWEN36_TIMEOUT_S = int(os.environ.get("KCS_ENSURE_QWEN36_TIMEOUT_S", "180"))
 
+# CLA-206: subprocess-level cadence watchdog. The outer DISTILL_TIMEOUT_S
+# (30 min) used to be the only guard - if qwen3.6 zombied mid-run, the
+# subprocess hung for the full 30 min before returning. With a stdout-line
+# cadence check we can detect a stalled inference within minutes and kill
+# the subprocess so the worker can surface the failure and retrigger qwen36.
+DISTILL_STDOUT_SILENCE_S = int(os.environ.get("KCS_DISTILL_STDOUT_SILENCE_S", "300"))
+RESTART_QWEN36_BAT = os.environ.get(
+    "KCS_RESTART_QWEN36_BAT",
+    r"C:/Projects/visual-llm/scripts/restart_qwen36.bat",
+)
+
+
+def _run_distill_with_cadence_watchdog(url: str, total_timeout_s: int, silence_s: int):
+    """Run distill.py via Popen + reader threads. If the subprocess produces
+    no stdout for `silence_s` seconds while still alive, kill it AND fire
+    restart_qwen36.bat (the most common cause of stdout silence is a hung
+    qwen36 inference, and the next dispatch will fail-loud-fast if qwen36
+    isn't restarted). Returns:
+        (returncode, captured_stdout, captured_stderr, killed_for_silence, killed_for_total)
+    """
+    proc = subprocess.Popen(
+        [PY, "-u", str(DISTILL), url, "--json"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, encoding="utf-8", errors="replace",
+    )
+    last_activity = [time.time()]
+    captured_stdout: list[str] = []
+    captured_stderr: list[str] = []
+
+    def _reader(stream, sink):
+        try:
+            for line in iter(stream.readline, ""):
+                if not line:
+                    break
+                last_activity[0] = time.time()
+                sink.append(line)
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    t_out = threading.Thread(target=_reader, args=(proc.stdout, captured_stdout), daemon=True)
+    t_err = threading.Thread(target=_reader, args=(proc.stderr, captured_stderr), daemon=True)
+    t_out.start()
+    t_err.start()
+
+    deadline = time.time() + total_timeout_s
+    killed_for_silence = False
+    killed_for_total = False
+    while True:
+        if proc.poll() is not None:
+            break
+        now = time.time()
+        if now > deadline:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            killed_for_total = True
+            break
+        if (now - last_activity[0]) > silence_s:
+            print(
+                f"distill_service: subprocess silent for {silence_s}s; "
+                f"killing PID {proc.pid} and triggering restart_qwen36.bat",
+                file=sys.stderr, flush=True,
+            )
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            killed_for_silence = True
+            # Fire-and-forget: don't block on the restart, the next distill
+            # request will probe /slots itself and the worker's
+            # ensure-qwen36 path will await it.
+            try:
+                subprocess.Popen([RESTART_QWEN36_BAT], shell=True)
+            except Exception as exc:
+                print(f"distill_service: restart_qwen36.bat trigger failed: {exc}",
+                      file=sys.stderr, flush=True)
+            break
+        time.sleep(2)
+
+    t_out.join(timeout=5)
+    t_err.join(timeout=5)
+    try:
+        proc.wait(timeout=5)
+    except Exception:
+        pass
+    return (proc.returncode, "".join(captured_stdout), "".join(captured_stderr),
+            killed_for_silence, killed_for_total)
+
 # Optional clawfish-opus "take" layered on the mechanical verdict (Discord
 # presentation). Calls the starfish-reason shim (-> clawfish-opus). Best-effort:
 # the mechanical verdict stands if the take fails or is disabled.
@@ -167,25 +259,36 @@ def _worker(job_id: str, url: str):
                     )
                 return
 
-        r = subprocess.run(
-            [PY, "-u", str(DISTILL), url, "--json"],
-            capture_output=True, text=True, timeout=DISTILL_TIMEOUT_S,
-            encoding="utf-8", errors="replace",
+        # CLA-206: cadence watchdog replaces a bare subprocess.run. If the
+        # subprocess emits no stdout for DISTILL_STDOUT_SILENCE_S seconds
+        # while still alive, it is killed and restart_qwen36.bat fires.
+        rc, out, err, silenced, total_timeout = _run_distill_with_cadence_watchdog(
+            url, DISTILL_TIMEOUT_S, DISTILL_STDOUT_SILENCE_S,
         )
+        if silenced:
+            with _lock:
+                _jobs[job_id].update(
+                    status="done",
+                    verdict={"ok": False, "error": "subprocess_stalled",
+                             "detail": f"no stdout for {DISTILL_STDOUT_SILENCE_S}s, "
+                                       f"killed PID + triggered restart_qwen36"},
+                )
+            return
+        if total_timeout:
+            with _lock:
+                _jobs[job_id].update(status="error", error="distill timed out")
+            return
         try:
-            verdict = json.loads(r.stdout)
+            verdict = json.loads(out)
         except Exception:
             verdict = {"ok": False, "error": "parse_failed",
-                       "detail": (r.stdout or r.stderr or "")[-400:]}
+                       "detail": (out or err or "")[-400:]}
         if isinstance(verdict, dict) and verdict.get("ok"):
             take = _clawfish_take(verdict)
             if take:
                 verdict["take"] = take
         with _lock:
             _jobs[job_id].update(status="done", verdict=verdict)
-    except subprocess.TimeoutExpired:
-        with _lock:
-            _jobs[job_id].update(status="error", error="distill timed out")
     except Exception as exc:
         with _lock:
             _jobs[job_id].update(status="error", error=str(exc)[:300])
