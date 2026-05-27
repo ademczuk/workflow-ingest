@@ -97,9 +97,22 @@ def _emit_text(
 
 
 def _emit_json(patterns, audits, decisions) -> None:
+    # Phase 1 fan-out: include the `routes` array per pattern so
+    # downstream consumers (Discord pill rendering, Phase 2 multi-write
+    # router) can see all candidates the matcher produced. Empty list
+    # when no candidate cleared the threshold.
     out = []
     for p, a, d in zip(patterns, audits, decisions):
         routing = p.routing
+        routes = [
+            {
+                "slug": c.subsystem_slug,
+                "kind": c.target_kind,
+                "score": round(c.score, 3),
+                "tier": c.tier,
+            }
+            for c in (p.candidates or ())
+        ]
         out.append({
             "pattern_id": p.pattern_id,
             "idea": p.idea,
@@ -110,6 +123,7 @@ def _emit_json(patterns, audits, decisions) -> None:
             "decision": d.decision,
             "reason": d.reason,
             "write_target": d.write_target,
+            "routes": routes,
             "audit_ok": a.ok,
             "audit_failures": list(a.failures),
             "source_url": p.source_url,

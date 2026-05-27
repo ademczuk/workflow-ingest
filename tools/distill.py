@@ -141,8 +141,11 @@ def main() -> int:
     else:
         worth, headline = False, "Probably skip: no actionable patterns"
 
+    # Phase 1 fan-out: pass `routes` through so the bridge can render a
+    # secondary-targets pill. `subsystem` stays for the legacy single-slug
+    # rendering path; both shapes coexist for backwards compatibility.
     top = [
-        {"idea": p["idea"], "subsystem": p["subsystem_slug"], "tier": p["tier"]}
+        {"idea": p["idea"], "subsystem": p["subsystem_slug"], "tier": p["tier"], "routes": p.get("routes", [])}
         for p in patterns if p["decision"] == "integrate"
     ][:5]
 

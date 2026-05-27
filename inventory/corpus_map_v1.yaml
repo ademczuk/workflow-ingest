@@ -33,6 +33,7 @@ subsystems:
   - slug: anismin
     name: Anismin
     role: "Opus 4.7 strategist brain (Floor 1 of AnisminOS federation, port 18889)"
+    target_kind: brain
     keywords: [anismin, strategist, federation, floor 1, dispatch, opus 4.7, 18889]
     concepts: [federation, multi-tenant, scoping rules, cross-floor protocol]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Anismin-Brain.md
@@ -44,6 +45,7 @@ subsystems:
   - slug: meridian
     name: Meridian
     role: "Research and evaluation harness brain; runs evolve-loop iterations"
+    target_kind: brain
     keywords: [meridian, evolve loop, critic, research, runtime policy, progressive disclosure]
     concepts: [evaluation, runtime policy injection, semantic search, knowledge synthesis]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Meridian-Brain.md
@@ -56,6 +58,7 @@ subsystems:
   - slug: kimiclaw
     name: KimiClawSwarm (KCS)
     role: "Kimi swarm brain at port 9643; classic vs crew Persona+Verify; auto-mode via tier1_ratio"
+    target_kind: brain
     keywords: [kimi, kimiclaw, kcs, swarm, persona, verify, ocean personas, mailbox, lifecycle, 9643]
     concepts: [multi-agent swarm, persona-facade, fault hierarchy, audit-driven, federation-ready]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Kimiclaw-Brain.md
@@ -68,6 +71,7 @@ subsystems:
   - slug: clawfish
     name: Clawfish
     role: "Discord-fallback Opus pipeline; backup path when openclaw saturates"
+    target_kind: brain
     keywords: [clawfish, discord fallback, opus discord, openclaw saturation]
     concepts: [fallback, capacity overflow, multi-channel routing]
     obsidian_canonical: 02-Knowledge/Wiki/Harness-Insights/Clawfish-Pipeline.md
@@ -77,6 +81,7 @@ subsystems:
   - slug: solve-room
     name: Solve-Room
     role: "Boardroom autonomy loop integrating all four brains; manager gates, fail-open, shadow rollout"
+    target_kind: orchestration
     keywords: [solve room, solve-room, boardroom, four brain, manager gate, fail open, shadow rollout, EMPTY_VETO_NEUTRAL, dissent, ratify]
     concepts: [consensus, veto, audit trail, novelty gating, dispatch_status_history]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Solve-Room-v4-System.md
@@ -88,6 +93,7 @@ subsystems:
   - slug: visual-llm
     name: Visual-LLM Stack
     role: "Local YouTube and video summarization via Qwen3.6-27B + mmproj on RTX 5090"
+    target_kind: pipeline
     keywords: [qwen3.6, mmproj, llama-server, parakeet, kokoro tts, keyframes, scene detect, visual-llm, mcp-server youtube_summarize]
     concepts: [vision language model, multimodal embedding, transcript backends, slide extraction]
     obsidian_canonical: 02-Knowledge/Wiki/AI/YouTube-Summarizer-MCP-Server.md
@@ -97,6 +103,7 @@ subsystems:
   - slug: brutal-harness
     name: Brutal Harness
     role: "Adversarial QA via QwQ-32B; reds, asymmetric critic, four-stage QC verdict"
+    target_kind: pipeline
     keywords: [brutal, QwQ, qwq-32b, asymmetric critic, qc verdict, brutal redteam, brutal-on bat]
     concepts: [adversarial validation, telemetry, calibration, common failure modes]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Brutal-Harness-v3.md
@@ -112,11 +119,76 @@ subsystems:
   - slug: trident
     name: Trident
     role: "Multi-model orchestration: Codex / Gemini / Grok / Claude consensus, scoring-based routing"
+    target_kind: orchestration
     keywords: [trident, ask codex, ask gemini, ask grok, ask all, qc consensus, scoring router, fanout]
     concepts: [multi-model consensus, free-tier subscriptions, model selection, prompt adaptation]
     obsidian_canonical: 02-Knowledge/Wiki/AI/Codex-Brain.md
     obsidian_operational: []
     write_target_when_novel: 02-Knowledge/Wiki/AI/
+
+  # Phase 1 fan-out additions (2026-05-27): six systems that were in
+  # snapshot.yaml as provenance-only but not routable. Now first-class
+  # routing targets so the matcher can surface them as candidates.
+
+  - slug: pantheon
+    name: Pantheon
+    role: "Tiered council with domain weights and 464 episodes of model performance data"
+    target_kind: orchestration
+    keywords: [pantheon, council, tiered deliberation, domain weights, model performance, tier 1, tier 4, episodes]
+    concepts: [council consensus, domain routing, model selection, historical performance]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/AI/
+
+  - slug: pipeline.job-orchestrator
+    name: Job Orchestrator (Motia pipeline)
+    role: "Job matching pipeline: scraper, guardian liveness, embed, classify, score, notify"
+    target_kind: pipeline
+    keywords: [job matching, resume scoring, scraper, motia, JobScrape, hiring market, guardian, classify, score, notify]
+    concepts: [pipeline orchestration, scraping, embedding, classification, scoring]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/projects/
+
+  - slug: knowledge.obsidian
+    name: Obsidian Vault
+    role: "Canonical knowledge wiki; daily notes, MOCs, knowledge graph, RAG corpus"
+    target_kind: wiki
+    keywords: [obsidian, vault, daily note, MOC, knowledge graph, RAG, wiki, markdown]
+    concepts: [knowledge graph, vault structure, daily note workflow, RAG retrieval]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/
+
+  - slug: knowledge.memory
+    name: Claude Code Memory
+    role: "Auto-memory and MEMORY.md persistent recall across sessions"
+    target_kind: wiki
+    keywords: [auto-memory, MEMORY.md, persistent recall, session memory, memory file, feedback project reference]
+    concepts: [persistent memory, session continuity, recall, memory consolidation]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/
+
+  - slug: tracker.nimbalyst
+    name: Nimbalyst Tracker
+    role: "Linear-style issue and ticket tracker; sprint planning and P0/P1/P2 prioritization"
+    target_kind: tracker
+    keywords: [nimbalyst, linear, issue, ticket, sprint, P0, P1, P2, priority, bug, task]
+    concepts: [issue tracking, sprint planning, priority gating, ticket lifecycle]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/projects/
+
+  - slug: meta.cross-cutting
+    name: Cross-Cutting Patterns
+    role: "Glue, infrastructure, contracts, invariants without a single specific owner"
+    target_kind: none
+    keywords: [cross-cutting, architecture, glue, infrastructure, contract, invariant, schema, policy]
+    concepts: [architectural pattern, system invariant, shared infrastructure, contract design]
+    obsidian_canonical: null
+    obsidian_operational: []
+    write_target_when_novel: 02-Knowledge/Wiki/Harness-Insights/
 
 # Topical pages — wiki pages that are not subsystems but ARE valid routing
 # targets. Patterns about generic concepts (vector embeddings, knowledge-base
@@ -237,3 +309,9 @@ routing_rules:
     - visual-llm
     - clawfish
     - trident
+    - pantheon
+    - pipeline.job-orchestrator
+    - knowledge.obsidian
+    - knowledge.memory
+    - tracker.nimbalyst
+    - meta.cross-cutting  # lowest priority; only wins on ties when nothing else matches

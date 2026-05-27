@@ -13,6 +13,17 @@ from inventory.model import Snapshot
 CORPUS_SCHEMA_VERSION = "1.0"
 
 
+# Phase 1 fan-out: allowed values for SubsystemEntry.target_kind. Each
+# routable subsystem declares what KIND of write/insight surface it owns
+# so downstream consumers can route differently (a "wiki" goes to a
+# markdown sink, a "tracker" to Linear, an "orchestration" target is
+# read-only insight). Defaults to "brain" when missing for backwards
+# compat with corpus entries that predate this field.
+_ALLOWED_TARGET_KINDS = frozenset({
+    "brain", "wiki", "tracker", "pipeline", "orchestration", "discord", "none",
+})
+
+
 @dataclass(frozen=True)
 class SubsystemEntry:
     slug: str
@@ -23,6 +34,7 @@ class SubsystemEntry:
     obsidian_canonical: str | None
     obsidian_operational: tuple[str, ...]
     write_target_when_novel: str | None
+    target_kind: str = "brain"
 
 
 @dataclass(frozen=True)
@@ -123,6 +135,16 @@ def load_corpus_map(path: Path) -> CorpusMap:
         if slug in seen_slugs:
             raise ValueError(f"corpus_map {path}: duplicate slug {slug!r}")
         seen_slugs.add(slug)
+        # Phase 1 fan-out: target_kind defaults to "brain" when omitted so
+        # pre-fan-out corpus_map entries keep loading unchanged. Fail loud
+        # if a value is present but not in the allowed set; silent fallback
+        # would mask typos like "brian" or "writer" that affect routing.
+        tk = s.get("target_kind", "brain")
+        if tk not in _ALLOWED_TARGET_KINDS:
+            raise ValueError(
+                f"corpus_map {path}: subsystem {slug!r} has invalid target_kind "
+                f"{tk!r}; allowed values: {sorted(_ALLOWED_TARGET_KINDS)}"
+            )
         subsystems.append(
             SubsystemEntry(
                 slug=slug,
@@ -133,6 +155,7 @@ def load_corpus_map(path: Path) -> CorpusMap:
                 obsidian_canonical=s.get("obsidian_canonical"),
                 obsidian_operational=tuple(s.get("obsidian_operational") or ()),
                 write_target_when_novel=s.get("write_target_when_novel"),
+                target_kind=tk,
             )
         )
 

@@ -58,9 +58,15 @@ def test_duplicate_slug_rejected(tmp_path: Path):
 
 
 def test_corpus_subsystems_match_corpus_map_v1(corpus):
+    # Phase 1 fan-out (2026-05-27): six new routable subsystems added so
+    # patterns that previously hit nothing (e.g. job-orchestrator,
+    # obsidian, nimbalyst tracker) now have a real target.
     expected_slugs = {
         "anismin", "meridian", "kimiclaw", "clawfish",
         "solve-room", "visual-llm", "brutal-harness", "trident",
+        "pantheon", "pipeline.job-orchestrator",
+        "knowledge.obsidian", "knowledge.memory",
+        "tracker.nimbalyst", "meta.cross-cutting",
     }
     assert set(corpus.slug_set()) == expected_slugs
 

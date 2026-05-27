@@ -13,11 +13,16 @@ from inventory.corpus_map import (
     validate_against_snapshot,
 )
 from inventory.model import Snapshot
-from pattern.model import Pattern, Routing
+from pattern.model import Pattern, Routing, RoutingCandidate
 
 
 HIGH_TIER_BM25_CUTOFF = 6.0
 MEDIUM_TIER_BM25_CUTOFF = 3.5
+
+# Phase 1 fan-out: default cap for pattern.candidates. Three is enough to
+# surface a primary + two genuine alternatives without overwhelming the
+# Discord rendering pill (which itself caps at three).
+DEFAULT_TOP_N_CANDIDATES = 3
 
 
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9]+")
@@ -106,13 +111,86 @@ def build_index(corpus: CorpusMap) -> _Index:
     )
 
 
+def _collect_candidates(
+    sub_scores: list[float],
+    subsystems: tuple[SubsystemEntry, ...],
+    top_scores: list[float],
+    topical_pages: tuple[TopicalPage, ...],
+    winner_slug: str,
+    threshold: float,
+    top_n: int,
+) -> tuple[RoutingCandidate, ...]:
+    """Phase 1 fan-out: collect top-N candidates above threshold.
+
+    Returns the winner FIRST, then up to (top_n - 1) additional candidates
+    above the threshold. Topical pages use a fixed "wiki" target_kind
+    since they ARE wiki entries; subsystems carry their declared
+    target_kind from the corpus map. Ties at the threshold are resolved
+    by score-then-slug-alpha ordering so the candidate list is
+    deterministic across runs. Returns empty tuple when nothing (not even
+    the winner) clears the threshold; callers should fall back to
+    pattern.routing for the singleton case.
+    """
+    if top_n <= 0:
+        return ()
+
+    # Aggregate every slug+score into a single list. Subsystem and topical
+    # entries share the same threshold; their kinds (brain/wiki/etc) just
+    # label which write surface the slug owns.
+    rows: list[tuple[str, str, float]] = []
+    for i, s in enumerate(subsystems):
+        sc = sub_scores[i] if i < len(sub_scores) else 0.0
+        rows.append((s.slug, s.target_kind, sc))
+    for i, t in enumerate(topical_pages):
+        sc = top_scores[i] if i < len(top_scores) else 0.0
+        rows.append((t.slug, "wiki", sc))
+
+    # Pull the winner out so we can pin it at position 0, then collect
+    # other candidates that clear the threshold. The winner can be below
+    # threshold (degenerate score=0 fallback case); we still surface it
+    # in routing.subsystem_slug but not in candidates, which is
+    # documented behavior (empty candidates => "no fan-out signal").
+    winner_row = next((r for r in rows if r[0] == winner_slug), None)
+    above = [r for r in rows if r[2] >= threshold and r[0] != winner_slug]
+    # Deterministic ordering: score desc, then slug asc (alpha tie-break)
+    above.sort(key=lambda r: (-r[2], r[0]))
+
+    out: list[RoutingCandidate] = []
+    if winner_row is not None and winner_row[2] >= threshold:
+        out.append(RoutingCandidate(
+            subsystem_slug=winner_row[0],
+            target_kind=winner_row[1],
+            score=float(winner_row[2]),
+            tier=_tier_for(winner_row[2], False),
+        ))
+    for slug, kind, sc in above[: max(0, top_n - len(out))]:
+        out.append(RoutingCandidate(
+            subsystem_slug=slug,
+            target_kind=kind,
+            score=float(sc),
+            tier=_tier_for(sc, False),
+        ))
+    return tuple(out)
+
+
 def match_bm25(
     p: Pattern,
     corpus: CorpusMap,
     snapshot: Snapshot,
     *,
     index: _Index | None = None,
+    top_n_candidates: int = DEFAULT_TOP_N_CANDIDATES,
+    candidate_threshold: float = MEDIUM_TIER_BM25_CUTOFF,
 ) -> Pattern:
+    """Score a Pattern against every routing target and pick a winner.
+
+    Phase 1 fan-out: in addition to setting pattern.routing (the winner),
+    populates pattern.candidates with up to top_n_candidates targets
+    whose BM25 score is >= candidate_threshold. The winner is always
+    first in the list when above threshold. Threshold defaults to
+    MEDIUM_TIER_BM25_CUTOFF so candidates align with the existing
+    medium/high tier boundary.
+    """
     validate_against_snapshot(corpus, snapshot)
 
     idx = index if index is not None else build_index(corpus)
@@ -162,16 +240,43 @@ def match_bm25(
         write_target=write_target,
         target_kind=target_kind,
     )
-    return p.with_routing(routing)
+    # Phase 1 fan-out: gather secondary candidates. The winner gets
+    # priority position 0 in the candidate list. If even the winner is
+    # below threshold (degenerate zero-score case), candidates is an
+    # empty tuple and downstream code falls back to pattern.routing.
+    candidates = _collect_candidates(
+        sub_scores=sub_scores,
+        subsystems=idx.subsystems,
+        top_scores=top_scores,
+        topical_pages=idx.topical_pages,
+        winner_slug=slug,
+        threshold=candidate_threshold,
+        top_n=top_n_candidates,
+    )
+    return p.with_candidates(candidates).with_routing(routing)
 
 
 def match_all_bm25(
     patterns: list[Pattern],
     corpus: CorpusMap,
     snapshot: Snapshot,
+    *,
+    top_n_candidates: int = DEFAULT_TOP_N_CANDIDATES,
+    candidate_threshold: float = MEDIUM_TIER_BM25_CUTOFF,
 ) -> list[Pattern]:
+    # Phase 1 fan-out: forwards the candidate kwargs so callers can tune
+    # the threshold or top-N across a whole batch without touching the
+    # per-pattern call site.
     index = build_index(corpus)
-    return [match_bm25(p, corpus, snapshot, index=index) for p in patterns]
+    return [
+        match_bm25(
+            p, corpus, snapshot,
+            index=index,
+            top_n_candidates=top_n_candidates,
+            candidate_threshold=candidate_threshold,
+        )
+        for p in patterns
+    ]
 
 
 def score_pattern(p: Pattern, corpus: CorpusMap, *, index: _Index | None = None) -> dict[str, float]:
