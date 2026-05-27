@@ -298,7 +298,15 @@ def _worker(job_id: str, url: str):
 def healthz():
     with _lock:
         n = len(_jobs)
-    return jsonify({"ok": True, "jobs": n, "token": bool(TOKEN)})
+        # "active" = jobs whose worker thread is still in flight. The arbiter
+        # reads this to detect REAL distill demand; using total `jobs` (which
+        # includes completed-but-not-pruned entries up to JOB_TTL_S=3600) would
+        # block brutal-llm auto-acquire for an hour after the last successful
+        # distill while the meta harness misroutes 400s to qwen36 unchecked
+        # (observed 2026-05-27 11:00 - GPU pegged at 70% / 400W on wrong-port
+        # text reranks because Rule 1 distill_active stayed True forever).
+        active = sum(1 for v in _jobs.values() if v.get("status") == "running")
+    return jsonify({"ok": True, "jobs": n, "active": active, "token": bool(TOKEN)})
 
 
 QWEN_URL = os.environ.get("KCS_QWEN_BASE_URL", "http://127.0.0.1:7870")
